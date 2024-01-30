@@ -18,6 +18,8 @@ typedef struct
   int psize;
   int **grid;
   int *result;
+  bool complete;
+  bool valid;
   //pthread_mutex_t *mutex; // Mutex for synchronization
 
 } parameters;
@@ -25,34 +27,39 @@ typedef struct
 void *RowCheck(void* par){
   parameters *parm = (parameters *)par;
   int row = parm->row;
-  //int col = parm->column;
-  // int **grid = parm->grid;
-  //int psize = parm->psize;
-  //int *result = parm->result;
-  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  bool valid = parm->valid;
+  int psize = parm->psize;
+  int **grid = parm->grid;
 
-  int *valider = (int *)malloc((parm->psize + 1) * sizeof(int));
-  for (int i = 0; i < parm->psize; i++)
+  // Dynamically allocate memory for the result
+  // bool *result = (bool *)malloc(sizeof(bool));
+  // *result = *valid;
+
+  int *valider = (int *)malloc((psize + 1) * sizeof(int));
+  for (int i = 0; i < psize; i++)
   {
     valider[i] = 0;
   }
-  for(int j = 1; j <= parm->psize; j++){
-    //printf("Before accessing grid[%d][%d]\n", row, j);
-    int num = parm->grid[row][j];
-    if (num < 1 || num > parm->psize || valider[num] != 0)
+  for (int j = 1; j <= psize; j++)
+  {
+    int num = grid[row][j];
+    if (num < 1 || num > psize || valider[num] != 0)
     {
-      // free(valider);
-      pthread_exit(NULL);
-      // break;
+      valid = false;
+      //pthread_exit(NULL);
+      break;
       } else {
         valider[num] = 1;
-        }
+      }
   }
-  pthread_mutex_lock(&mutex);
-  result[row] = 1;
-  pthread_mutex_unlock(&mutex);
 
-  pthread_exit(NULL);
+  
+  //printf("Valid after the loop: %s\n", valid ? "true" : "false");
+  free(valider);
+
+  //printf("Thread result: %p\n" ,valid);
+  return (void *) valid;
+  //pthread_exit(NULL);
 }
 void *ColumnCheck(void* par)
 {
@@ -106,67 +113,63 @@ void checkPuzzle(int psize, int **grid, bool *complete, bool *valid) {
   *valid = true;
   *complete = true;
   //loop to check completeness
-  for(int row = 1; row < psize; row++) {
-    for(int column = 1;  column < psize; column++){
+  for(int row = 1; row <= psize; row++) {
+    for(int column = 1;  column <= psize; column++){
       if (grid[row][column] == 0 ){
         *complete = false;
         break;
       }
     }
-    
   }
   if(*complete){ //if complete is true
-    //printf("dede\n");
-    pthread_t rowthread[psize];
-    int Index = 0;
+    
     for (int i = 1; i <= psize; i++){
-      for(int j = 1; j <= psize; j++){
-        if(j == 1){
-           parameters *Rowdata = (parameters *)malloc(sizeof(parameters));
-            Rowdata->row = i;
-            Rowdata->column = j;
-            //Rowdata->psize = psize;
-            //Rowdata->result = result;
-            //printf("dede\n");
-            pthread_create(&rowthread[Index] , NULL, RowCheck, Rowdata);
-            Index++;
-           
-        }
-    }
-  }
-   
-     for(int i = 0; i < num_threads; i++){
-       pthread_join(rowthread[i],NULL);
-     }
+      pthread_t rowthread;
+      parameters *Rowdata = (parameters *)malloc(sizeof(parameters));
+      Rowdata->row = i; //check the row only
+      Rowdata->complete = true;
+      Rowdata->valid = true;
+      Rowdata->grid = grid;
+      Rowdata->psize = psize;
+      pthread_create(&rowthread, NULL, RowCheck, Rowdata);
+      //void *result;
+      pthread_join(rowthread, (void*) &valid);
+      
+      //printf("Result: %s\n", valid);
 
-    // for (int i = 0; i < num_threads; i++)
-    //   pthread_join(rowthread[i], NULL);
+      free(Rowdata);
+      }
 
-    //   for (int i = 0; i < num_threads; i++)
-    //   {
-    //     if (result[i] == 0)
-    //     {
-    //       *valid = false;
-    //     }
-    //   }
-    // }
+      
 
-    // pthread_t threads[num_threads];
-    // int Index = 0;
-    // ex: 4 column for 4x4 grid
-    // for(int i = 1; i <= psize; i++){
-    //   for(int j = 1; j <= psize; j++){
-    //     if(i == 1){
-    //       parameters *Coldata = (parameters *)malloc(sizeof(parameters));
-    //       Coldata->row = i;
-    //       Coldata->column = j;
-    //       Coldata->psize = psize;
-    //       Coldata->grid = grid;
-    //       pthread_create(&threads[Index++], NULL, ColumnCheck, Coldata);
-    //       //printf("Created thread for i=%d, j=%d\n", i, j);
-    //     }
-    //   }
-    // }
+          // for (int i = 0; i < num_threads; i++)
+          //   pthread_join(rowthread[i], NULL);
+
+          //   for (int i = 0; i < num_threads; i++)
+          //   {
+          //     if (result[i] == 0)
+          //     {
+          //       *valid = false;
+          //     }
+          //   }
+          // }
+
+          // pthread_t threads[num_threads];
+          // int Index = 0;
+          // ex: 4 column for 4x4 grid
+          // for(int i = 1; i <= psize; i++){
+          //   for(int j = 1; j <= psize; j++){
+          //     if(i == 1){
+          //       parameters *Coldata = (parameters *)malloc(sizeof(parameters));
+          //       Coldata->row = i;
+          //       Coldata->column = j;
+          //       Coldata->psize = psize;
+          //       Coldata->grid = grid;
+          //       pthread_create(&threads[Index++], NULL, ColumnCheck, Coldata);
+          //       //printf("Created thread for i=%d, j=%d\n", i, j);
+          //     }
+          //   }
+          // }
 
   
     }
