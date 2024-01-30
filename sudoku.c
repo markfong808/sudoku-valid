@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #define num_threads 27
 
-// int valid[num_threads] = {0};
-pthread_t threads[num_threads];
+int result[num_threads] = {0}; 
+
 
 /* structure for passing data to threads */
 typedef struct
@@ -16,42 +16,82 @@ typedef struct
   int row;
   int column;
   int psize;
+  int **grid;
+  int *result;
+  //pthread_mutex_t *mutex; // Mutex for synchronization
 
 } parameters;
 
-void *ColumnValid(parameters* par,int **grid)
+void *RowCheck(void* par){
+  parameters *parm = (parameters *)par;
+  int row = parm->row;
+  //int col = parm->column;
+  // int **grid = parm->grid;
+  //int psize = parm->psize;
+  //int *result = parm->result;
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+  int *valider = (int *)malloc((parm->psize + 1) * sizeof(int));
+  for (int i = 0; i < parm->psize; i++)
+  {
+    valider[i] = 0;
+  }
+  for(int j = 1; j <= parm->psize; j++){
+    //printf("Before accessing grid[%d][%d]\n", row, j);
+    int num = parm->grid[row][j];
+    if (num < 1 || num > parm->psize || valider[num] != 0)
+    {
+      // free(valider);
+      pthread_exit(NULL);
+      // break;
+      } else {
+        valider[num] = 1;
+        }
+  }
+  pthread_mutex_lock(&mutex);
+  result[row] = 1;
+  pthread_mutex_unlock(&mutex);
+
+  pthread_exit(NULL);
+}
+void *ColumnCheck(void* par)
 {
   parameters *parm = (parameters *)par;
   //int row = parm->row;
   int col = parm->column;
   int psize = parm->psize;
-  // int **grid = data->grid;
-
+  int **grid = parm->grid;
+  //int *result = parm->result; // Result array
+  
+  //pthread_t colTids[psize];
+  
+  
   //check if number 1-9 only appear once in column
   // Dynamic memory allocation for valider array
   int *valider = (int *)malloc(psize * sizeof(int));
 
-  if (valider == NULL)
-  {
-    // Handle memory allocation failure
-    pthread_exit(NULL);
-  }
 
   // Initialize the array with all 0
-  for (int i = 0; i < psize; i++)
+  for (int i = 0; i <= psize; i++)
   {
     valider[i] = 0;
-  }
+  } 
+  
   for (int i = 1; i < psize; i++)
   {
     int num = grid[i][col];
     if (num < 1 || num > psize || valider[num - 1] == 1) {
+      
       pthread_exit(NULL);
     } else {
       valider[num - 1] = 1; //mark it as seen
     }
   }
-  //no duplicated found
+
+  
+   //result[col] = 1;
+
+  free(valider); // Free allocated memory
   pthread_exit(NULL);
 }
 // takes puzzle size and grid[][] representing sudoku puzzle
@@ -65,7 +105,6 @@ void checkPuzzle(int psize, int **grid, bool *complete, bool *valid) {
   // YOUR CODE GOES HERE and in HELPER FUNCTIONS  
   *valid = true;
   *complete = true;
-  
   //loop to check completeness
   for(int row = 1; row < psize; row++) {
     for(int column = 1;  column < psize; column++){
@@ -74,30 +113,67 @@ void checkPuzzle(int psize, int **grid, bool *complete, bool *valid) {
         break;
       }
     }
-    if(! *complete){
-      break;
-    }
+    
   }
   if(*complete){ //if complete is true
-    pthread_t columnThread[psize];//keep track column thread identifiers
-    
-    for(int col = 1; col <= psize; col++){
-      parameters *data = (parameters *)malloc(sizeof(parameters));
-      data->row = 1;
-      data->column = col;
-      data->psize = psize;
-    
-     if(pthread_create(&columnThread[col],NULL,ColumnValid,(void *) data) != 0){
-      *valid = false;
-      return;
-     }
-    }
-    
-    for(int i = 0; i < num_threads; i++){
-      pthread_join(threads[i],NULL);
+    //printf("dede\n");
+    pthread_t rowthread[psize];
+    int Index = 0;
+    for (int i = 1; i <= psize; i++){
+      for(int j = 1; j <= psize; j++){
+        if(j == 1){
+           parameters *Rowdata = (parameters *)malloc(sizeof(parameters));
+            Rowdata->row = i;
+            Rowdata->column = j;
+            //Rowdata->psize = psize;
+            //Rowdata->result = result;
+            //printf("dede\n");
+            pthread_create(&rowthread[Index] , NULL, RowCheck, Rowdata);
+            Index++;
+           
+        }
     }
   }
+   
+     for(int i = 0; i < num_threads; i++){
+       pthread_join(rowthread[i],NULL);
+     }
+
+    // for (int i = 0; i < num_threads; i++)
+    //   pthread_join(rowthread[i], NULL);
+
+    //   for (int i = 0; i < num_threads; i++)
+    //   {
+    //     if (result[i] == 0)
+    //     {
+    //       *valid = false;
+    //     }
+    //   }
+    // }
+
+    // pthread_t threads[num_threads];
+    // int Index = 0;
+    // ex: 4 column for 4x4 grid
+    // for(int i = 1; i <= psize; i++){
+    //   for(int j = 1; j <= psize; j++){
+    //     if(i == 1){
+    //       parameters *Coldata = (parameters *)malloc(sizeof(parameters));
+    //       Coldata->row = i;
+    //       Coldata->column = j;
+    //       Coldata->psize = psize;
+    //       Coldata->grid = grid;
+    //       pthread_create(&threads[Index++], NULL, ColumnCheck, Coldata);
+    //       //printf("Created thread for i=%d, j=%d\n", i, j);
+    //     }
+    //   }
+    // }
+
+  
+    }
+
+    
 }
+
 
 // takes filename and pointer to grid[][]
 // returns size of Sudoku puzzle and fills grid
@@ -149,11 +225,6 @@ int main(int argc, char **argv) {
     printf("usage: ./sudoku puzzle.txt\n");
     return EXIT_FAILURE;
   }
-  //Declare thread object
-  // pthread_t columnThreads[num_threads];
-  // pthread_t rowThreads[num_threads];
-
-  // pthread_create(&columnThreads,NULL,&,(void *) data);
   
   // grid is a 2D array
   int **grid = NULL;
@@ -172,3 +243,4 @@ int main(int argc, char **argv) {
   deleteSudokuPuzzle(sudokuSize, grid);
   return EXIT_SUCCESS;
 }
+
