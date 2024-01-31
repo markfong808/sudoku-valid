@@ -8,8 +8,7 @@
 #define num_threads 27
 
 int result[num_threads] = {0}; 
-
-
+int x = 0;
 /* structure for passing data to threads */
 typedef struct
 {
@@ -28,39 +27,44 @@ void *RowCheck(void* par){
   parameters *parm = (parameters *)par;
   int row = parm->row;
   bool valid = parm->valid;
+  //printf("Valid value for row %d: %d\n", row, valid);
   int psize = parm->psize;
   int **grid = parm->grid;
-
-  // Dynamically allocate memory for the result
-  // bool *result = (bool *)malloc(sizeof(bool));
-  // *result = *valid;
-
+  int rowTids[psize];
   int *valider = (int *)malloc((psize + 1) * sizeof(int));
-  for (int i = 0; i < psize; i++)
+  for (int i = 0; i <= psize; i++)
   {
     valider[i] = 0;
   }
   for (int j = 1; j <= psize; j++)
   {
     int num = grid[row][j];
-    if (num < 1 || num > psize || valider[num] != 0)
-    {
+    if (num < 1 || num > psize || valider[num] == 1)
+    { 
       valid = false;
-      //pthread_exit(NULL);
-      break;
+      x = 1;
+       break;
       } else {
         valider[num] = 1;
       }
+      
   }
-
-  
+  //printf("Valid after the loop: %s\n", valid ? "true" : "false");
+  // Print the valider array
+  printf("Valider array after the loop: ");
+  for (int i = 0; i <= psize; i++)
+  {
+    printf("%d ", valider[i]);
+  }
+  printf("\n");
   //printf("Valid after the loop: %s\n", valid ? "true" : "false");
   free(valider);
 
-  //printf("Thread result: %p\n" ,valid);
-  return (void *) valid;
+  //printf("Thread result: %d\n" ,valid);
+  //return (void *) valid;
   //pthread_exit(NULL);
 }
+
 void *ColumnCheck(void* par)
 {
   parameters *parm = (parameters *)par;
@@ -87,11 +91,12 @@ void *ColumnCheck(void* par)
   for (int i = 1; i < psize; i++)
   {
     int num = grid[i][col];
-    if (num < 1 || num > psize || valider[num - 1] == 1) {
-      
-      pthread_exit(NULL);
+      if (num < 1 || num > psize || valider[num] != 0) {
+      parm->valid = false;
+      //pthread_exit(NULL);
+      break;
     } else {
-      valider[num - 1] = 1; //mark it as seen
+      valider[num] = 1; //mark it as seen
     }
   }
 
@@ -122,9 +127,11 @@ void checkPuzzle(int psize, int **grid, bool *complete, bool *valid) {
     }
   }
   if(*complete){ //if complete is true
-    
+    pthread_t rowthread;
+    //int index = 0;
     for (int i = 1; i <= psize; i++){
-      pthread_t rowthread;
+      //pthread_t rowthread[psize];
+      //int index = 0;
       parameters *Rowdata = (parameters *)malloc(sizeof(parameters));
       Rowdata->row = i; //check the row only
       Rowdata->complete = true;
@@ -133,50 +140,25 @@ void checkPuzzle(int psize, int **grid, bool *complete, bool *valid) {
       Rowdata->psize = psize;
       pthread_create(&rowthread, NULL, RowCheck, Rowdata);
       //void *result;
-      pthread_join(rowthread, (void*) &valid);
-      
-      //printf("Result: %s\n", valid);
-
+      //printf("The value of valid is: %d\n", *valid);
+      pthread_join(rowthread, NULL);
+      // printf("The value of valid is: %d\n", valid);
+      //bool valid = Rowdata->valid;
       free(Rowdata);
-      }
-
       
-
-          // for (int i = 0; i < num_threads; i++)
-          //   pthread_join(rowthread[i], NULL);
-
-          //   for (int i = 0; i < num_threads; i++)
-          //   {
-          //     if (result[i] == 0)
-          //     {
-          //       *valid = false;
-          //     }
-          //   }
-          // }
-
-          // pthread_t threads[num_threads];
-          // int Index = 0;
-          // ex: 4 column for 4x4 grid
-          // for(int i = 1; i <= psize; i++){
-          //   for(int j = 1; j <= psize; j++){
-          //     if(i == 1){
-          //       parameters *Coldata = (parameters *)malloc(sizeof(parameters));
-          //       Coldata->row = i;
-          //       Coldata->column = j;
-          //       Coldata->psize = psize;
-          //       Coldata->grid = grid;
-          //       pthread_create(&threads[Index++], NULL, ColumnCheck, Coldata);
-          //       //printf("Created thread for i=%d, j=%d\n", i, j);
-          //     }
-          //   }
-          // }
-
-  
     }
 
-    
+    for (int i = 1; i <= psize; i++)
+    {
+      if (x == 1)
+      {
+        *valid = false;
+      } else {
+        
+      }
+    }
+  }  
 }
-
 
 // takes filename and pointer to grid[][]
 // returns size of Sudoku puzzle and fills grid
@@ -246,4 +228,3 @@ int main(int argc, char **argv) {
   deleteSudokuPuzzle(sudokuSize, grid);
   return EXIT_SUCCESS;
 }
-
