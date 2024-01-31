@@ -170,8 +170,12 @@ void printDataGrid(parameters *d, int neg)	{	// set neg to TRUE or FALSE if you 
 	printf("Grid :\n");
 	for (int row = 1; row <= d->psize; row++)	{
 		for (int col = 1; col <= d->psize; col++)	{
-			if (neg == FALSE)
-				printf(" %d ", abs(d->grid[row][col]));
+			if (neg == FALSE)	{
+				if (abs(d->grid[row][col]) >= 10 && abs(d->grid[row][col]) <= 35)
+					printf(" %c ", 'A' + (abs(d->grid[row][col]) - 10));
+				else
+					printf(" %d ", abs(d->grid[row][col]));
+			}
 			else if (neg == TRUE && d->grid[row][col] >= 0)
 				printf(" %d ", d->grid[row][col]);
 			else
@@ -259,23 +263,6 @@ int checkValidThreads(parameters d, int print)	{	// return 1 if KO, 0 if OK
 	return (0); // DEFAULT : OK
 }
 
-// int checkValidNormal(parameters d)	{	// return 1 if KO, 0 if OK
-
-// 	// function for rows
-// 	if (checkRow(&d))
-// 		return (1);
-// 	// function for columns
-// 	if (checkCol(&d))
-// 		return (1);
-// 	// function for squares
-// 	resetDataSquareGrid(&d);
-// 	fillDataSquareGrid(&d);
-// 	if (checkSquareGrid(&d))
-// 		return (1);
-// 	printf("checkValidNormal : OK\n");
-// 	return (0); // DEFAULT : OK
-// }
-
 void	initDataIncompleteGrid(parameters *d)	{
 	(DEBUG_COMPLETE ? printf("initDataIncompleteGrid : Start\n") : 0);
 	for (int row = 1; row <= d->psize; row++)	{
@@ -322,8 +309,16 @@ int	initData(char *filename, parameters *d)	{	// init Data struct
 	for (int row = 1; row <= d->psize; row++) {				// init grid
 		d->grid[row] = (int *)malloc((d->psize + 1) * sizeof(int));
 		for (int col = 1; col <= d->psize; col++) {
-			fscanf(fp, "%d", &d->grid[row][col]);
+			char tempChar;
+			fscanf(fp, "%*[^0-9A-Za-z]%c", &tempChar);
+
+			if (tempChar >= '0' && tempChar <= '9') {
+				d->grid[row][col] = tempChar - '0';
+			} else if (tempChar >= 'A' && tempChar <= 'Z') {
+				d->grid[row][col] = tempChar - 'A' + 10;
+			}
 		}
+		// printf("\n");
 	}
 	fclose(fp);
 
