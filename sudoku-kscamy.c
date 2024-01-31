@@ -9,13 +9,9 @@
 
 // int result[num_threads] = {0}; 
 
-/* structure for passing data to threads */
 typedef struct	{
 	int psize;
 	int **grid;
-	int *result;
-	bool complete;
-	bool valid;
 	// pthread_mutex_t *complete;
 	// pthread_mutex_t *valid;
 } parameters;
@@ -24,7 +20,7 @@ typedef struct	{
 int checkPuzzle(int psize, int **grid, bool *complete, bool *valid)	{
 	*valid = true;
 	*complete = true;
-	//loop to check completeness
+
 	for(int row = 1; row <= psize; row++) {
 		for(int column = 1;  column <= psize; column++){
 			if (grid[row][column] == 0 ){
@@ -39,62 +35,53 @@ int checkPuzzle(int psize, int **grid, bool *complete, bool *valid)	{
 	return (0); // DEFAULT : OK
 }
 
-int readSudokuPuzzle(char *filename, int ***grid)	{
+void	initData(char *filename, parameters *d)	{
 	FILE *fp = fopen(filename, "r");
 	if (fp == NULL) {
 		printf("Could not open file %s\n", filename);
 		exit(EXIT_FAILURE);
 	}
-	int psize;
-	fscanf(fp, "%d", &psize);
-	int **agrid = (int **)malloc((psize + 1) * sizeof(int *));
-	for (int row = 1; row <= psize; row++) {
-		agrid[row] = (int *)malloc((psize + 1) * sizeof(int));
-		for (int col = 1; col <= psize; col++) {
-		fscanf(fp, "%d", &agrid[row][col]);
+	fscanf(fp, "%d", &d->psize);
+
+	d->grid = (int **)malloc((d->psize + 1) * sizeof(int *));
+
+	for (int row = 1; row <= d->psize; row++) {
+		d->grid[row] = (int *)malloc((d->psize + 1) * sizeof(int));
+		for (int col = 1; col <= d->psize; col++) {
+			fscanf(fp, "%d", &d->grid[row][col]);
 		}
 	}
 	fclose(fp);
-	*grid = agrid;
-	return psize;
 }
 
-// takes puzzle size and grid[][]
-// prints the puzzle
-void printSudokuPuzzle(int psize, int **grid)	{
-	printf("%d\n", psize);
-	for (int row = 1; row <= psize; row++) {
-		for (int col = 1; col <= psize; col++) {
-		printf("%d ", grid[row][col]);
+void printDataGrid(parameters *d)	{
+	printf("%d\n", d->psize);
+	for (int row = 1; row <= d->psize; row++) {
+		for (int col = 1; col <= d->psize; col++) {
+		printf("%d ", d->grid[row][col]);
 		}
 		printf("\n");
 	}
 	printf("\n");
 }
 
-// takes puzzle size and grid[][]
-// frees the memory allocated
-void deleteSudokuPuzzle(int psize, int **grid)	{
-	for (int row = 1; row <= psize; row++) {
-		free(grid[row]);
+void deleteData(parameters *d)	{
+	for (int row = 1; row <= d->psize; row++) {
+		free(d->grid[row]);
 	}
-	free(grid);
+	free(d->grid);
 }
 
-// expects file name of the puzzle as argument in command line
 int main(int argc, char **argv)	{
 	if (argc != 2) {
 		printf("usage: ./sudoku puzzle.txt\n");
 		return EXIT_FAILURE;
 	}
-	
-	int **grid = NULL;
-	// int sudokuSize = readSudokuPuzzle(argv[1], &grid);
-	// bool valid = false;
-	// bool complete = false;
-	// checkPuzzle(sudokuSize, grid, &complete, &valid);
-	printSudokuPuzzle(sudokuSize, grid);
-	deleteSudokuPuzzle(sudokuSize, grid);
+	parameters data;			// create data struct
+	initData(argv[1], &data);	// init data struct
+
+	printDataGrid(&data);
+	deleteData(&data);
 	return EXIT_SUCCESS;
 }
 
