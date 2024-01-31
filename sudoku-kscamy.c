@@ -5,11 +5,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #define	DEBUG_CHECK 0
 #define	DEBUG_COMPLETE 0
 #define	DEBUG_BRUTE_FORCE 0
 #define MAX_WHILE 500 // security to avoid abort
-#define MAX_WHILE_BRUTE_FORCE 10000000 // security to crash
+// #define MAX_WHILE_BRUTE_FORCE 10000000 // security to crash
+#define MAX_WHILE_BRUTE_FORCE 18446744073709551614 // security to crash
 #define TRUE 1
 #define FALSE 0
 #define printfRes FALSE
@@ -26,7 +28,7 @@ typedef struct	{
 	int	**sGrid;	// Square Grid, like for 4x4 you have 2x2 square
 	int	incNbr;	// number of incomplete points
 	int	**iPos;	// positions of incomplete points
-	int	maxTry;	// Max try for Brute Force
+	unsigned long long	maxTry;	// Max try for Brute Force
 } parameters;
 
 // return the absolute value
@@ -214,7 +216,7 @@ void	resetDataSquareGrid(parameters *d)	{
 	}
 }
 
-int checkValidThreads(parameters d)	{	// return 1 if KO, 0 if OK
+int checkValidThreads(parameters d, int print)	{	// return 1 if KO, 0 if OK
 	resetDataSquareGrid(&d);
 	fillDataSquareGrid(&d);
 
@@ -233,6 +235,19 @@ int checkValidThreads(parameters d)	{	// return 1 if KO, 0 if OK
     int resultValue2 = (int)(intptr_t)result2;
     int resultValue3 = (int)(intptr_t)result3;
 
+	if (print == TRUE && resultValue1 == 0)
+		printf("checkValidThreads: checkRow: OK\n");
+	else if (print == TRUE)
+		printf("checkValidThreads: checkRow: KO\n");
+	if (print == TRUE && resultValue2 == 0)
+		printf("checkValidThreads: checkCol: OK\n");
+	else if (print == TRUE)
+		printf("checkValidThreads: checkCol: KO\n");
+	if (print == TRUE && resultValue3 == 0)
+		printf("checkValidThreads: checkSquareGrid: OK\n");
+	else if (print == TRUE)
+		printf("checkValidThreads: checkSquareGrid: KO\n");
+
 	if (resultValue1 == 1)
 		return (1);
 	if (resultValue2 == 1)
@@ -240,26 +255,26 @@ int checkValidThreads(parameters d)	{	// return 1 if KO, 0 if OK
 	if (resultValue3 == 1)
 		return (1);
 
-	printf("checkValidThreads : OK\n");
+	printf("checkValidThreads: OK\n");
 	return (0); // DEFAULT : OK
 }
 
-int checkValidNormal(parameters d)	{	// return 1 if KO, 0 if OK
+// int checkValidNormal(parameters d)	{	// return 1 if KO, 0 if OK
 
-	// function for rows
-	if (checkRow(&d))
-		return (1);
-	// function for columns
-	if (checkCol(&d))
-		return (1);
-	// function for squares
-	resetDataSquareGrid(&d);
-	fillDataSquareGrid(&d);
-	if (checkSquareGrid(&d))
-		return (1);
-	printf("checkValidNormal : OK\n");
-	return (0); // DEFAULT : OK
-}
+// 	// function for rows
+// 	if (checkRow(&d))
+// 		return (1);
+// 	// function for columns
+// 	if (checkCol(&d))
+// 		return (1);
+// 	// function for squares
+// 	resetDataSquareGrid(&d);
+// 	fillDataSquareGrid(&d);
+// 	if (checkSquareGrid(&d))
+// 		return (1);
+// 	printf("checkValidNormal : OK\n");
+// 	return (0); // DEFAULT : OK
+// }
 
 void	initDataIncompleteGrid(parameters *d)	{
 	(DEBUG_COMPLETE ? printf("initDataIncompleteGrid : Start\n") : 0);
@@ -360,7 +375,8 @@ void	initDataIPos(parameters *d)	{
 }
 
 
-void	useBruteForce(parameters *d)	{
+unsigned long long	useBruteForce(parameters *d)	{
+	unsigned long long ret = 0;
 	int i = d->incNbr - 1;
 	(DEBUG_BRUTE_FORCE ? printf("useBruteForce : Start\n") : 0);
 	while (i >= 0)	{
@@ -372,9 +388,11 @@ void	useBruteForce(parameters *d)	{
 			d->grid[d->iPos[i][2]][d->iPos[i][1]] = d->grid[d->iPos[i][2]][d->iPos[i][1]] - 1;
 			/*	opti start	*/
 			if (!checkSingleRow(&*d, d->iPos[i][2]) && !checkSingleCol(&*d, d->iPos[i][1]))
-				return;
-			else
+				return (ret);
+			else	{
 				i = d->incNbr;
+				ret++;
+			}
 			/*	opti end	*/
 			/*	not opti start	*/
 			// return;
@@ -383,6 +401,7 @@ void	useBruteForce(parameters *d)	{
 		i--;
 	}
 	(DEBUG_BRUTE_FORCE ? printf("useBruteForce : OK\n") : 0);
+	return (ret);
 }
 
 int	myPow(int base, int exponent)	{
@@ -394,18 +413,21 @@ int	myPow(int base, int exponent)	{
 }
 
 void	completeGrid(parameters *d)	{
-	int i = 0;
+	unsigned long long i = 0;
 	initDataIncompleteGrid(&*d);
 	d->maxTry = myPow(d->psize, d->incNbr) + 1;
-	printf("completeGrid: incNbr: %d, MaxTry: %d\n", d->incNbr, d->maxTry);
+	printf("completeGrid: incNbr: %d, MaxTry: %llu\n", d->incNbr, d->maxTry);
 	// printDataGrid(&*d, TRUE);
 	initDataIPos(&*d);
 	// printDataIPos(&*d);
-	while (i < MAX_WHILE_BRUTE_FORCE && i <= d->maxTry && checkValidThreads(*d))	{
-		useBruteForce(&*d);
+	while (i < ULLONG_MAX && i <= d->maxTry && checkValidThreads(*d, FALSE))	{
+		i += useBruteForce(&*d);
+		printf("%llu.%02llu%% done\r", i * 100 / d->maxTry, (i * 10000 / d->maxTry) % 100);
+        fflush(stdout);
 		i++;
 	}
-	printf("completeGrid: FIND IN %D BIG TESTS !!!\n", i);
+	printf("Find at %llu%% !\n", (unsigned long long)(i * 100 / d->maxTry));
+	printf("completeGrid: find with %llu tests\n", i);
 }
 
 int main(int argc, char **argv)	{
@@ -420,7 +442,8 @@ int main(int argc, char **argv)	{
 	if (checkComplete(&data))
 		completeGrid(&data);
 	// checkValidNormal(data);
-	checkValidThreads(data);
+	checkValidThreads(data, TRUE);
+	// checkValidNormal(data);
 	printDataGrid(&data, FALSE);
 	deleteData(&data);
 	return EXIT_SUCCESS;
