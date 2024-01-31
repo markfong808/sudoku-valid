@@ -3,7 +3,7 @@
 # Script to compile and run sudoku program
 rm -f sudoku
 # gcc -Wall -Wextra sudoku.c -o sudoku
-gcc -Wall -Wextra -Werror sudoku-kscamy.c -o sudoku
+gcc -pthread -Wall -Wextra -Werror sudoku-kscamy.c -o sudoku
 # ./sudoku puzzle2-valid.txt
 # ./sudoku puzzle9-valid.txt
 ./sudoku puzzle2-fill-valid.txt
