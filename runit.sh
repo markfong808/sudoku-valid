@@ -2,8 +2,9 @@
 
 # Script to compile and run sudoku program
 rm -f sudoku
-gcc -Wall -Wextra sudoku.c -o sudoku
-./sudoku puzzle9-valid.txt
+# gcc -Wall -Wextra sudoku.c -o sudoku
+gcc -Wall -Wextra -Werror sudoku-kscamy.c -o sudoku
+./sudoku puzzle2-valid.txt
 
 # to check for memory leaks, use
 # valgrind ./sudoku puzzle9-good.txt
