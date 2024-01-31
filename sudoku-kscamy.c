@@ -6,17 +6,50 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define	debug_fct 0
+#define MAX_WHILE 500 // security to avoid abort
 // #define num_threads 27
 
 // int result[num_threads] = {0}; 
 
 typedef struct	{
 	int	psize;
-	int	key;	// the SUM number !
+	int	sum;		// the SUM number
+	int sSize;		// size of a square
 	int	**grid;
+	int	**sGrid;	// Square Grid, like for 4x4 you have 2x2 square
 	// pthread_mutex_t *complete;
 	// pthread_mutex_t *valid;
 } parameters;
+
+// return 1 if KO, 0 if OK
+void	fillDataSquareGrid(parameters *d)	{
+	(debug_fct ? printf("fillDataSquareGrid : Start\n") : printf(""));
+	for (int row=1;  row <= d->psize; row++)	{
+		for (int col=1; col <= d->psize; col++)	{
+			d->sGrid[(((col - 1) / d->sSize) + 1)][(((row - 1) / d->sSize) + 1 )] += d->grid[col][row];
+			(debug_fct ? printf("col: %d, row: %d, col/: %d, row/: %d\n", col, row, (((col - 1) / d->sSize) + 1), (((row - 1) / d->sSize) + 1 )) : printf(""));
+		}
+	}
+	(debug_fct ? printf("fillDataSquareGrid : OK\n") : printf(""));
+}
+
+// return 1 if KO, 0 if OK
+int	checkSquare(parameters *d)	{
+	(debug_fct ? printf("checkSquare\n") : printf(""));
+	for (int row=1;  row <= d->sSize; row++)	{
+		for (int col=1; col <= d->sSize; col++)	{
+			if (d->sGrid[row][col] != d->sum){
+				(debug_fct ? printf ("sum %d d->sum %d\n", d->sGrid[row][col], d->sum) : printf(""));
+				printf("checkSquare : KO\n");
+				return (1); // KO
+			}
+			(debug_fct ? printf("%d ", d->sGrid[row][col]) : printf(""));
+		}
+		(debug_fct ? printf("\n") : printf(""));
+	}
+	printf("checkSquare : OK\n");
+	return (0); // OK
+}
 
 // return 1 if KO, 0 if OK
 int	checkRow(parameters *d)	{
@@ -25,11 +58,11 @@ int	checkRow(parameters *d)	{
 	for (int row=1;  row <= d->psize; row++)	{
 		for (int col=1; col <= d->psize; col++)	{
 			sum += d->grid[row][col];
-			(debug_fct ? printf("%d", d->grid[row][col]) : printf(""));
+			(debug_fct ? printf("%d ", d->grid[row][col]) : printf(""));
 		}
 		(debug_fct ? printf("\n") : printf(""));
-		if (sum != d->key){
-			(debug_fct ? printf ("sum %d d->key %d\n", sum, d->key) : printf(""));
+		if (sum != d->sum){
+			(debug_fct ? printf ("sum %d d->sum %d\n", sum, d->sum) : printf(""));
 			printf("Rows : KO\n");
 			return (1); // KO
 		}
@@ -46,11 +79,11 @@ int	checkCol(parameters *d)	{
 	for (int col=1;  col <= d->psize; col++)	{
 		for (int row=1; row <= d->psize; row++)	{
 			sum += d->grid[row][col];
-			(debug_fct ? printf("%d", d->grid[row][col]) : printf(""));
+			(debug_fct ? printf("%d ", d->grid[row][col]) : printf(""));
 		}
 		(debug_fct ? printf("\n") : printf(""));
-		if (sum != d->key){
-			(debug_fct ? printf ("sum %d d->key %d\n", sum, d->key) : printf(""));
+		if (sum != d->sum){
+			(debug_fct ? printf ("sum %d d->sum %d\n", sum, d->sum) : printf(""));
 			printf("col : KO\n");
 			return (1); // KO
 		}
@@ -77,6 +110,39 @@ int	checkComplete(parameters *d)	{
 	return (0); // OK
 }
 
+
+void printAllData(parameters *d)	{
+	printf("d->psize : %d\n", d->psize);
+	printf("d->sum : %d\n", d->sum);
+	printf("d->sSize : %d\n", d->sSize);
+	printf("\n");
+	printf("Grid :\n");
+	for (int row = 1; row <= d->psize; row++)	{
+		for (int col = 1; col <= d->psize; col++)
+			printf("%d ", d->grid[row][col]);
+		printf("\n");
+	}
+	printf("\n");
+	printf("Square Grid :\n");
+	for (int row = 1; row <= d->sSize; row++)	{
+		for (int col = 1; col <= d->sSize; col++)
+			printf("%d ", d->sGrid[row][col]);
+		printf("\n");
+	}
+	printf("\n");
+}
+
+void printDataSquareGrid(parameters *d)	{
+	printf("Square Grid :\n");
+	for (int row = 1; row <= d->sSize; row++)	{
+		for (int col = 1; col <= d->sSize; col++)
+			printf("%d ", d->sGrid[row][col]);
+		printf("\n");
+	}
+	printf("\n");
+}
+
+
 // return 1 if KO, 0 if OK, -1 if INCOMPLETE
 int checkValid(parameters d)	{
 	// function for rows
@@ -84,10 +150,20 @@ int checkValid(parameters d)	{
 	// function for columns
 	checkCol(&d);
 	// function for squares
+	fillDataSquareGrid(&d);
+	// printDataSquareGrid(&d);
+	checkSquare(&d);
 	return (0); // DEFAULT : OK
 }
 
-void	initData(char *filename, parameters *d)	{
+void	resetDataSquareGrid(parameters *d)	{
+	for (int row = 1; row <= d->sSize; row++)	{
+		for (int col = 1; col <= d->sSize; col++)
+			d->sGrid[row][col] = 0;
+	}
+}
+
+int	initData(char *filename, parameters *d)	{	// init Data struct
 	FILE *fp = fopen(filename, "r");
 	if (fp == NULL) {
 		printf("Could not open file %s\n", filename);
@@ -95,10 +171,22 @@ void	initData(char *filename, parameters *d)	{
 	}
 	fscanf(fp, "%d", &d->psize);							//	init psize
 
-	d->key = (d->psize * (d->psize + 1) ) / 2;				//	init key
+	/*	set sSize : squareSize	*/
+	int i = 0;
+	while (i <= MAX_WHILE && i < d->psize && i * i != d->psize)
+		i++;
+	if (i == MAX_WHILE)	{
+		printf("Error: in funciton void	initData(char *filename, parameters *d); while go to max !\n");
+		return (1);
+	}
+	else if (i * i == d->psize)
+		d->sSize = i;
 
+	/*	set sum	*/
+	d->sum = (d->psize * (d->psize + 1) ) / 2;
+
+	/*	set grid	*/
 	d->grid = (int **)malloc((d->psize + 1) * sizeof(int *));	// malloc grid
-
 	for (int row = 1; row <= d->psize; row++) {				// init grid
 		d->grid[row] = (int *)malloc((d->psize + 1) * sizeof(int));
 		for (int col = 1; col <= d->psize; col++) {
@@ -106,25 +194,24 @@ void	initData(char *filename, parameters *d)	{
 		}
 	}
 	fclose(fp);
-}
 
-void printDataGrid(parameters *d)	{
-	printf("d->psize : %d\n", d->psize);
-	printf("d->key : %d\n", d->key);
-	for (int row = 1; row <= d->psize; row++) {
-		for (int col = 1; col <= d->psize; col++) {
-		printf("%d ", d->grid[row][col]);
-		}
-		printf("\n");
+	/*	set sGrid : squareGrid	*/
+	d->sGrid = (int **)malloc((d->sSize + 1) * sizeof(int *));	// malloc grid
+	for (int row = 1; row <= d->sSize; row++) {				// init grid
+		d->sGrid[row] = (int *)malloc((d->sSize + 1) * sizeof(int));
+		for (int col = 1; col <= d->sSize; col++)
+			d->sGrid[row][col] = 0;
 	}
-	printf("\n");
+	return (0);
 }
 
 void deleteData(parameters *d)	{
-	for (int row = 1; row <= d->psize; row++) {
+	for (int row = 1; row <= d->psize; row++)
 		free(d->grid[row]);
-	}
 	free(d->grid);
+	for (int row = 1; row <= d->sSize; row++)
+		free(d->sGrid[row]);
+	free(d->sGrid);
 }
 
 int main(int argc, char **argv)	{
@@ -134,10 +221,10 @@ int main(int argc, char **argv)	{
 	}
 	parameters data;			// create data struct
 	initData(argv[1], &data);	// init data struct
-	printDataGrid(&data);
+	printAllData(&data);
 
 	checkComplete(&data);
-	checkValid(data);		
+	checkValid(data);
 
 	deleteData(&data);
 	return EXIT_SUCCESS;
