@@ -44,20 +44,20 @@ void	fillDataSquareGrid(parameters *d)	{	// return 1 if KO, 0 if OK
 	(DEBUG_CHECK ? printf("fillDataSquareGrid : OK\n") : 0);
 }
 
-int	checkSquareGrid(parameters *d)	{	// return 1 if KO, 0 if OK
+int	checkSquareGrid(parameters *d, int printfRes)	{	// return 1 if KO, 0 if OK
 	(DEBUG_CHECK ? printf("checkSquareGrid\n") : 0);
 	for (int row=1;  row <= d->sSize; row++)	{
 		for (int col=1; col <= d->sSize; col++)	{
 			if (d->sGrid[row][col] != d->sum){
 				(DEBUG_CHECK ? printf ("sum %d d->sum %d\n", d->sGrid[row][col], d->sum) : 0);
-				printf("checkSquareGrid : KO\n");
+				(printfRes == TRUE) ? printf("checkSquareGrid : KO\n") : 0;
 				return (1); // KO
 			}
 			(DEBUG_CHECK ? printf("%d ", d->sGrid[row][col]) : 0);
 		}
 		(DEBUG_CHECK ? printf("\n") : 0);
 	}
-	printf("checkSquareGrid : OK\n");
+	(printfRes == TRUE) ? printf("checkSquareGrid : OK\n") : 0;
 	return (0); // OK
 }
 
@@ -145,7 +145,7 @@ void printDataSquareGrid(parameters *d)	{
 }
 
 void printDataIPos(parameters *d)	{
-	printf("Incomple positions :\n");
+	printf("Incomplete positions :\n");
 	for (int i = 0; i < d->incNbr; i++)	{
 		printf("%d - [%d;%d] = %d\n", i+1, d->iPos[i][1], d->iPos[i][2], d->grid[d->iPos[i][2]][d->iPos[i][1]]);
 	}
@@ -178,7 +178,7 @@ int checkValid(parameters d)	{	// return 1 if KO, 0 if OK
 	// function for squares
 	resetDataSquareGrid(&d);
 	fillDataSquareGrid(&d);
-	if (checkSquareGrid(&d))
+	if (checkSquareGrid(&d, FALSE))
 		return (1);
 	return (0); // DEFAULT : OK
 }
@@ -313,13 +313,14 @@ void	completeGrid(parameters *d)	{
 	initDataIncompleteGrid(&*d);
 	d->maxTry = myPow(d->psize, d->incNbr) + 1;
 	printf("completeGrid: incNbr: %d, MaxTry: %d\n", d->incNbr, d->maxTry);
-	printDataGrid(&*d, TRUE);
+	// printDataGrid(&*d, TRUE);
 	initDataIPos(&*d);
-	printDataIPos(&*d);
+	// printDataIPos(&*d);
 	while (i < MAX_WHILE_BRUTE_FORCE && i <= d->maxTry && checkValid(*d))	{
 		useBruteForce(&*d);
 		i++;
 	}
+	printf("completeGrid: FIND IN %D TRYS !!!\n", i);
 }
 
 int main(int argc, char **argv)	{
