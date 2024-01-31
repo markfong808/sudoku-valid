@@ -421,7 +421,7 @@ void	completeGrid(parameters *d)	{
         fflush(stdout);
 		i++;
 	}
-	printf("Find at %llu%% !\n", (unsigned long long)(i * 100 / d->maxTry));
+	printf("%llu.%02llu%% done\n", i * 100 / d->maxTry, (i * 10000 / d->maxTry) % 100);
 	printf("completeGrid: find with %llu tests\n", i);
 }
 
