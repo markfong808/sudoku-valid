@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <stdint.h>
 #define	DEBUG_CHECK 0
 #define	DEBUG_COMPLETE 0
 #define	DEBUG_BRUTE_FORCE 0
@@ -37,130 +38,130 @@ int	abs(int i)	{
 }
 
 void	fillDataSquareGrid(parameters *d)	{	// return 1 if KO, 0 if OK
-	(DEBUG_CHECK ? printf("fillDataSquareGrid : Start\n") : 0);
+	if (DEBUG_CHECK)	printf("fillDataSquareGrid : Start\n");
 	for (int row=1;  row <= d->psize; row++)	{
 		for (int col=1; col <= d->psize; col++)	{
 			d->sGrid[(((col - 1) / d->sSize) + 1)][(((row - 1) / d->sSize) + 1 )] += abs(d->grid[col][row]);
-			(DEBUG_CHECK ? printf("col: %d, row: %d, col/: %d, row/: %d\n", col, row, (((col - 1) / d->sSize) + 1), (((row - 1) / d->sSize) + 1 )) : 0);
+			if (DEBUG_CHECK)	printf("col: %d, row: %d, col/: %d, row/: %d\n", col, row, (((col - 1) / d->sSize) + 1), (((row - 1) / d->sSize) + 1 ));
 		}
 	}
-	(DEBUG_CHECK ? printf("fillDataSquareGrid : OK\n") : 0);
+	if (DEBUG_CHECK)	printf("fillDataSquareGrid : OK\n");
 }
 
 void*	checkSquareGrid(void *arg)	{	// return 1 if KO, 0 if OK
 	parameters *d = arg;
-	(DEBUG_CHECK ? printf("checkSquareGrid\n") : 0);
+	if (DEBUG_CHECK)	printf("checkSquareGrid\n");
 	for (int row=1;  row <= d->sSize; row++)	{
 		for (int col=1; col <= d->sSize; col++)	{
 			if (d->sGrid[row][col] != d->sum){
-				(DEBUG_CHECK ? printf ("sum %d d->sum %d\n", d->sGrid[row][col], d->sum) : 0);
-				(printfRes == TRUE) ? printf("checkSquareGrid : KO\n") : 0;
+				if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", d->sGrid[row][col], d->sum);
+				if (printfRes == TRUE)	printf("checkSquareGrid : KO\n");
 				// return (1); // KO
 				 return (void*)(intptr_t)1;
 			}
-			(DEBUG_CHECK ? printf("%d ", d->sGrid[row][col]) : 0);
+			if (DEBUG_CHECK)	printf("%d ", d->sGrid[row][col]);
 		}
-		(DEBUG_CHECK ? printf("\n") : 0);
+		if (DEBUG_CHECK)	printf("\n");
 	}
-	(printfRes == TRUE) ? printf("checkSquareGrid : OK\n") : 0;
+	if (printfRes == TRUE)	printf("checkSquareGrid : OK\n");
 	// return (0); // OK
 	return (void*)(intptr_t)0;
 }
 
 int	checkSingleRow(parameters *d, int y)	{	// return 1 if KO, 0 if OK
-	(DEBUG_CHECK ? printf("checkSingleRow\n") : 0);
+	if (DEBUG_CHECK)	printf("checkSingleRow\n");
 	int	sum = 0;
 
 	for (int col=1; col <= d->psize; col++)	{
 		sum += abs(d->grid[y][col]);
-		(DEBUG_CHECK ? printf("%d ", d->grid[y][col]) : 0);
+		if (DEBUG_CHECK)	printf("%d ", d->grid[y][col]);
 	}
-	(DEBUG_CHECK ? printf("\n") : 0);
+	if (DEBUG_CHECK)	printf("\n");
 	if (sum != d->sum){
-		(DEBUG_CHECK ? printf ("sum %d d->sum %d\n", sum, d->sum) : 0);
-		(printfRes == TRUE) ? printf("checkSingleRow : KO\n") : 0;
+		if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", sum, d->sum);
+		if (printfRes == TRUE)	printf("checkSingleRow : KO\n");
 		return (1); // KO
 	}
-	(printfRes == TRUE) ? printf("checkSingleRow : OK\n") : 0;
+	if (printfRes == TRUE)	printf("checkSingleRow : OK\n");
 	return (0); // OK
 }
 
 void*	checkRow(void *arg)	{	// return 1 if KO, 0 if OK
 	parameters *d = arg;
-	(DEBUG_CHECK ? printf("checkRow\n") : 0);
+	if (DEBUG_CHECK)	printf("checkRow\n");
 	int	sum = 0;
 	for (int row=1;  row <= d->psize; row++)	{
 		for (int col=1; col <= d->psize; col++)	{
 			sum += abs(d->grid[row][col]);
-			(DEBUG_CHECK ? printf("%d ", d->grid[row][col]) : 0);
+			if (DEBUG_CHECK)	printf("%d ", d->grid[row][col]);
 		}
-		(DEBUG_CHECK ? printf("\n") : 0);
+		if (DEBUG_CHECK)	printf("\n");
 		if (sum != d->sum){
-			(DEBUG_CHECK ? printf ("sum %d d->sum %d\n", sum, d->sum) : 0);
-			(printfRes == TRUE) ? printf("Rows : KO\n") : 0;
+			if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", sum, d->sum);
+			if (printfRes == TRUE)	printf("Rows : KO\n");
 			// return (1); // KO
 			return (void*)(intptr_t)1;
 		}
 		sum = 0;
 	}
-	(printfRes == TRUE) ? printf("Rows : OK\n") : 0;
+	if (printfRes == TRUE)	printf("Rows : OK\n");
 	// return (0); // OK
 	return (void*)(intptr_t)0;
 }
 
 int	checkSingleCol(parameters *d, int x)	{	// return 1 if KO, 0 if OK
-	(DEBUG_CHECK ? printf("checkSingleCol\n") : 0);
+	if (DEBUG_CHECK)	printf("checkSingleCol\n");
 	int	sum = 0;
 
 	for (int row=1; row <= d->psize; row++)	{
 		sum += abs(d->grid[row][x]);
-		(DEBUG_CHECK ? printf("%d ", d->grid[row][x]) : 0);
+		if (DEBUG_CHECK)	printf("%d ", d->grid[row][x]);
 	}
-	(DEBUG_CHECK ? printf("\n") : 0);
+	if (DEBUG_CHECK)	printf("\n");
 	if (sum != d->sum){
-		(DEBUG_CHECK ? printf ("sum %d d->sum %d\n", sum, d->sum) : 0);
-		(printfRes == TRUE) ? printf("checkSingleCol : KO\n") : 0;
+		if (DEBUG_CHECK)	printf("sum %d d->sum %d\n", sum, d->sum);
+		if (printfRes == TRUE)	printf("checkSingleCol : KO\n");
 		return (1); // KO
 	}
-	(printfRes == TRUE) ? printf("checkSingleCol : OK\n") : 0;
+	if (printfRes == TRUE)	printf("checkSingleCol : OK\n");
 	return (0); // OK
 }
 
 void*	checkCol(void *arg)	{	// return 1 if KO, 0 if OK
 	parameters *d = arg;
-	(DEBUG_CHECK ? printf("checkCol\n") : 0);
+	if (DEBUG_CHECK)	printf("checkCol\n");
 	int	sum = 0;
 	for (int col=1;  col <= d->psize; col++)	{
 		for (int row=1; row <= d->psize; row++)	{
 			sum += abs(d->grid[row][col]);
-			(DEBUG_CHECK ? printf("%d ", d->grid[row][col]) : 0);
+			if (DEBUG_CHECK)	printf("%d ", d->grid[row][col]);
 		}
-		(DEBUG_CHECK ? printf("\n") : 0);
+		if (DEBUG_CHECK)	printf("\n");
 		if (sum != d->sum){
-			(DEBUG_CHECK ? printf ("sum %d d->sum %d\n", sum, d->sum) : 0);
-			(printfRes == TRUE) ? printf("col : KO\n") : 0;
+			if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", sum, d->sum);
+			if (printfRes == TRUE)	printf("col : KO\n");
 			// return (1); // KO
 			return (void*)(intptr_t)1;
 		}
 		sum = 0;
 	}
-	(printfRes == TRUE) ? printf("col : OK\n") : 0;
+	if (printfRes == TRUE)	printf("col : OK\n");
 	// return (0); // OK
 	return (void*)(intptr_t)0;
 }
 
 int	checkComplete(parameters *d)	{	// return 1 if KO, 0 if OK
-	(DEBUG_CHECK ? printf("checkRow\n") : 0);
+	if (DEBUG_CHECK)	printf("checkRow\n");
 	for (int row=1;  row <= d->psize; row++)	{
 		for (int col=1; col <= d->psize; col++)	{
-			(DEBUG_CHECK ? printf("%d", d->grid[row][col]) : 0);
+			if (DEBUG_CHECK)	printf("%d", d->grid[row][col]);
 			if (d->grid[row][col] == 0){
-				(DEBUG_CHECK ? printf ("row %d col %d\n", row, col) : 0);
+				if (DEBUG_CHECK)	printf ("row %d col %d\n", row, col);
 				printf("Complete : KO\n");
 				return (1); // KO
 			}
 		}
-		(DEBUG_CHECK ? printf("\n") : 0);
+		if (DEBUG_CHECK)	printf("\n");
 	}
 	printf("Complete : OK\n");
 	return (0); // OK
@@ -264,22 +265,21 @@ int checkValidThreads(parameters d, int print)	{	// return 1 if KO, 0 if OK
 }
 
 void	initDataIncompleteGrid(parameters *d)	{
-	(DEBUG_COMPLETE ? printf("initDataIncompleteGrid : Start\n") : 0);
+	if (DEBUG_COMPLETE)	printf("initDataIncompleteGrid : Start\n");
 	for (int row = 1; row <= d->psize; row++)	{
 		for (int col = 1; col <= d->psize; col++){
 			if (d->grid[row][col] == 0)	{
 				d->grid[row][col] = -1;
 				d->incNbr++;
 			}
-			if (d->grid[row][col] >= 0)
-				(DEBUG_COMPLETE ? printf(" %d ", d->grid[row][col]) : 0);
-			else
-				(DEBUG_COMPLETE ? printf("%d ", d->grid[row][col]) : 0);
-			
+			if (d->grid[row][col] >= 0)	{
+				if (DEBUG_COMPLETE)	printf(" %d ", d->grid[row][col]);	}
+			else	{
+				if (DEBUG_COMPLETE)	printf("%d ", d->grid[row][col]);	}
 		}
-		(DEBUG_COMPLETE ? printf("\n") : 0);
+		if (DEBUG_COMPLETE)	printf("\n");
 	}
-	(DEBUG_COMPLETE ? printf("initDataIncompleteGrid : OK\n") : 0);
+	if (DEBUG_COMPLETE)	printf("initDataIncompleteGrid : OK\n");
 }
 
 int	initData(char *filename, parameters *d)	{	// init Data struct
@@ -348,7 +348,7 @@ void deleteData(parameters *d)	{
 }
 
 void	initDataIPos(parameters *d)	{
-	(DEBUG_BRUTE_FORCE ? printf("initDataIPos : Start\n") : 0);
+	if (DEBUG_BRUTE_FORCE)	printf("initDataIPos : Start\n");
 	int x = 0;
 	d->iPos = (int **)malloc((d->incNbr) * sizeof(int *));	// malloc iPos
 	for (int i=0; i < d->incNbr; i++)
@@ -358,24 +358,24 @@ void	initDataIPos(parameters *d)	{
 	for (int row = 1; row <= d->psize; row++)	{
 		for (int col = 1; col <= d->psize; col++){
 			if (d->grid[row][col] < 0)	{
-				// (DEBUG_BRUTE_FORCE ? printf("col: %d, row: %d\n", col, row) : 0);
+				// if (DEBUG_BRUTE_FORCE)	printf("col: %d, row: %d\n", col, row);
 				d->iPos[x][1] = col;	// like x 
 				d->iPos[x][2] = row;	// like y
-				(DEBUG_BRUTE_FORCE ? printf("%d - [%d;%d] & [%d;%d]\n", x+1, col, row, d->iPos[x][1], d->iPos[x][2]) : 0);
+				if (DEBUG_BRUTE_FORCE)	printf("%d - [%d;%d] & [%d;%d]\n", x+1, col, row, d->iPos[x][1], d->iPos[x][2]);
 				x++;
 			}
 		}
 	}
-	(DEBUG_BRUTE_FORCE ? printf("initDataIPos : OK\n") : 0);
+	if (DEBUG_BRUTE_FORCE)	printf("initDataIPos : OK\n");
 }
 
 
 unsigned long long	useBruteForce(parameters *d)	{
 	unsigned long long ret = 0;
 	int i = d->incNbr - 1;
-	(DEBUG_BRUTE_FORCE ? printf("useBruteForce : Start\n") : 0);
+	if (DEBUG_BRUTE_FORCE)	printf("useBruteForce : Start\n");
 	while (i >= 0)	{
-		(DEBUG_BRUTE_FORCE ? printf("%d - [%d;%d] = %d\n", i+1, d->iPos[i][1], d->iPos[i][2], d->grid[d->iPos[i][2]][d->iPos[i][1]]) : 0);
+		if (DEBUG_BRUTE_FORCE)	printf("%d - [%d;%d] = %d\n", i+1, d->iPos[i][1], d->iPos[i][2], d->grid[d->iPos[i][2]][d->iPos[i][1]]);
 		if (d->grid[d->iPos[i][2]][d->iPos[i][1]] == d->psize * -1)	{
 			d->grid[d->iPos[i][2]][d->iPos[i][1]] = -1;
 		}
@@ -395,7 +395,7 @@ unsigned long long	useBruteForce(parameters *d)	{
 		}
 		i--;
 	}
-	(DEBUG_BRUTE_FORCE ? printf("useBruteForce : OK\n") : 0);
+	if (DEBUG_BRUTE_FORCE)	printf("useBruteForce : OK\n");
 	return (ret);
 }
 
