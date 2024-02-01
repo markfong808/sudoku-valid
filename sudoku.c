@@ -30,15 +30,15 @@ void *RowCheck(void *par)
   bool valid = parm->valid;
   int psize = parm->psize;
   int **grid = parm->grid;
-  int *valider = (int *)malloc((psize + 1) * sizeof(int));
-  for (int i = 0; i <= psize; i++)
+  int *valider = (int *)malloc((psize * psize) * sizeof(int));
+  for (int i = 0; i <= (psize * psize); i++)
   {
     valider[i] = 0;
   }
   for (int j = 1; j <= psize; j++)
   {
     int num = grid[row][j];
-    if (num < 1 || num > psize || valider[num] == 1)
+    if (num < 1 || num > (psize * psize) || valider[num] == 1)
     {
       valid = false;
       x = 1;
@@ -49,13 +49,12 @@ void *RowCheck(void *par)
       valider[num] = 1;
     }
   }
-  // printf("Valid after the loop: %s\n", valid ? "true" : "false");
-  //  printf("Valider array after the loop: ");
-  //  for (int i = 0; i <= psize; i++)
-  //  {
-  //    printf("%d ", valider[i]);
-  //  }
-  //  printf("\n");
+   printf("Valider array after the loop: ");
+   for (int i = 0; i <= psize * psize; i++)
+   {
+     printf("%d ", valider[i]);
+   }
+   printf("\n");
   // printf("Valid after the loop: %s\n", valid ? "true" : "false");
   free(valider);
 
@@ -72,16 +71,16 @@ void *ColumnCheck(void *par)
   int **grid = parm->grid;
   bool valid = parm->valid;
 
-  int *valider = (int *)malloc((psize + 1) * sizeof(int));
+  int *valider = (int *)malloc((psize * psize) * sizeof(int));
 
-  for (int i = 0; i <= psize; i++)
+  for (int i = 0; i <= (psize * psize); i++)
   {
     valider[i] = 0;
   }
   for (int i = 1; i <= psize; i++)
   {
     int num = grid[i][col];
-    if (num < 1 || num > psize || valider[num] == 1)
+    if (num < 1 || num > (psize * psize) || valider[num] == 1)
     {
       valid = false;
       x = 1;
@@ -94,12 +93,12 @@ void *ColumnCheck(void *par)
   }
   // printf("Valid after the loop: %s\n", valid ? "true" : "false");
   //  Print the valider array
-  printf("Valider array after the loop: ");
-  for (int i = 0; i <= psize; i++)
-  {
-    printf("%d ", valider[i]);
-  }
-  printf("\n");
+  // printf("Valider array after the loop: ");
+  // for (int i = 0; i <= psize * psize; i++)
+  // {
+  //   printf("%d ", valider[i]);
+  // }
+  // printf("\n");
   // printf("Valid after the loop: %s\n", valid ? "true" : "false");
   free(valider);
 }
@@ -118,14 +117,9 @@ void *SubgridCheck(void *par)
   {
     valider[i] = 0;
   }
-  // int *map = (int *)malloc((psize + 1) * sizeof(int));
-  // for (int i = 0; i <= psize; i++)
-  // {
-  //   map[i] = 0;
-  // }
 
-  int subgrid_size = (int)sqrt(psize); // Determine subgrid size based on psize
-
+  if(psize > 3) {
+  int subgrid_size = (int)sqrt(psize);
   for (int row = 1; row <= psize; row += subgrid_size)
   {
     for (int col = 1; col <= psize; col += subgrid_size)
@@ -150,6 +144,26 @@ void *SubgridCheck(void *par)
     end_of_subgrid:;
     }
   }
+}
+
+// for (int row = 1; row <= psize; row++)
+// {
+//   for (int col = 1; col <= psize; col++)
+//   {
+//     int num = grid[row][col];
+//     if (num < 1 || num > psize || valider[num] == 1)
+//     {
+//       valid = false;
+//       x = 1;
+//       break;
+//     }
+//     else
+//     {
+//       valider[num] = 1;
+//     }
+//   }
+
+// }
 
 //if(psize == 3){
   // for (int row = 1; row <= psize; row += 3)
@@ -223,15 +237,15 @@ void *SubgridCheck(void *par)
         Coldata->valid = true;
         Coldata->grid = grid;
         Coldata->psize = psize;
-        // pthread_create(&colthread, NULL, ColumnCheck, Coldata);
-        // pthread_create(&rowthread, NULL, RowCheck, Rowdata);
+        pthread_create(&colthread, NULL, ColumnCheck, Coldata);
+        pthread_create(&rowthread, NULL, RowCheck, Rowdata);
         
-        // pthread_join(rowthread, NULL);
-        // pthread_join(colthread, NULL);
-        // // printf("The value of valid is: %d\n", valid);
-        // // bool valid = Rowdata->valid;
-        // free(Rowdata);
-        // free(Coldata);
+        pthread_join(rowthread, NULL);
+        pthread_join(colthread, NULL);
+        // printf("The value of valid is: %d\n", valid);
+        // bool valid = Rowdata->valid;
+        free(Rowdata);
+        free(Coldata);
       }
       // for (int j = 1; j <= psize; j++)
       // {
@@ -259,14 +273,13 @@ void *SubgridCheck(void *par)
         free(SubGrid_data);
       }
 
-      for (int i = 1; i <= psize; i++)
-      {
+      
         if (x == 1)
         {
           *valid = false;
         }
         
-      }
+      
     }
   }
 
