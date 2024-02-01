@@ -146,54 +146,6 @@ void *SubgridCheck(void *par)
   }
 }
 
-// for (int row = 1; row <= psize; row++)
-// {
-//   for (int col = 1; col <= psize; col++)
-//   {
-//     int num = grid[row][col];
-//     if (num < 1 || num > psize || valider[num] == 1)
-//     {
-//       valid = false;
-//       x = 1;
-//       break;
-//     }
-//     else
-//     {
-//       valider[num] = 1;
-//     }
-//   }
-
-// }
-
-//if(psize == 3){
-  // for (int row = 1; row <= psize; row += 3)
-  // {
-  //   for (int col = 1; col <= psize; col += 3)
-  //   {
-  //     // Reset valider for each subgrid
-  //     memset(valider, 0, (psize + 1) * sizeof(int));
-  //     for (int bx = row; bx < row + 3; bx++)
-  //     { // box_num inner loop
-  //       for (int by = col; by < col + 3; by++)
-  //       {
-  //         int box_num = grid[bx][by];
-  //         if (box_num < 1 || box_num > psize || valider[box_num] == 1)
-  //         {
-  //           valid = false;
-  //           x = 1;
-  //           // Handle breaking out of the innermost loop
-  //           goto end_of_subgrid;
-  //         }
-  //         else
-  //         {
-  //           valider[box_num] = 1;
-  //         }
-  //       }
-  //     }
-  //   end_of_subgrid:;
-  //   }
-  // }
-//}
   free(valider);
 }
   // takes puzzle size and grid[][] representing sudoku puzzle
@@ -223,16 +175,15 @@ void *SubgridCheck(void *par)
     if (*complete)
     { // if complete is true
       pthread_t rowthread, colthread, subgridthread;
-      for (int i = 1; i <= psize; i++)
-      {
+      
         parameters *Rowdata = (parameters *)malloc(sizeof(parameters));
-        Rowdata->row = i; // check the row only
+        Rowdata->row = 1; // check the row only
         Rowdata->complete = true;
         Rowdata->valid = true;
         Rowdata->grid = grid;
         Rowdata->psize = psize;
         parameters *Coldata = (parameters *)malloc(sizeof(parameters));
-        Coldata->column = i;
+        Coldata->column = 1;
         Coldata->complete = true;
         Coldata->valid = true;
         Coldata->grid = grid;
@@ -246,32 +197,19 @@ void *SubgridCheck(void *par)
         // bool valid = Rowdata->valid;
         free(Rowdata);
         free(Coldata);
-      }
-      // for (int j = 1; j <= psize; j++)
+      
+      // for (int i = 1; i <= psize; i++)  //4x4 create 4 thread
       // {
-      //   parameters *Coldata = (parameters *)malloc(sizeof(parameters));
-      //   Coldata->column = j;
-      //   Coldata->complete = true;
-      //   Coldata->valid = true;
-      //   Coldata->grid = grid;
-      //   Coldata->psize = psize;
-      //   pthread_create(&colthread, NULL, ColumnCheck, Coldata);
-      //   pthread_join(colthread, NULL);
-      //   free(Coldata);
+      //   parameters *SubGrid_data = (parameters *)malloc(sizeof(parameters));
+      //   SubGrid_data->column = i;
+      //   SubGrid_data->complete = true;
+      //   SubGrid_data->valid = true;
+      //   SubGrid_data->grid = grid;
+      //   SubGrid_data->psize = psize;
+      //   pthread_create(&subgridthread, NULL, SubgridCheck, SubGrid_data);
+      //   pthread_join(subgridthread, NULL);
+      //   free(SubGrid_data);
       // }
-
-      for (int i = 1; i <= psize; i++)  //4x4 create 4 thread
-      {
-        parameters *SubGrid_data = (parameters *)malloc(sizeof(parameters));
-        SubGrid_data->column = i;
-        SubGrid_data->complete = true;
-        SubGrid_data->valid = true;
-        SubGrid_data->grid = grid;
-        SubGrid_data->psize = psize;
-        pthread_create(&subgridthread, NULL, SubgridCheck, SubGrid_data);
-        pthread_join(subgridthread, NULL);
-        free(SubGrid_data);
-      }
 
       
         if (x == 1)
@@ -279,7 +217,7 @@ void *SubgridCheck(void *par)
           *valid = false;
         }
         
-      
+    
     }
   }
 
