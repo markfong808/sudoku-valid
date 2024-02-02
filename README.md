@@ -67,40 +67,67 @@ When Done with this row, Clean the List !!!!			// You wont crash because your nu
 Go to: Next Row.
 ```
 ------
-- The Sum technic :
+- The Sum AND Prod technic :
 
 It was under your eyes since the beguining :
 
-If you need to have ONLY one number each time by row / col / square, then, if you sum all the row, the result need to be ALWAYS the same, if not, then, maybe one number is missing, or is duplicate, etc ... Something is wrong.
+If you need to have ONLY one number each time by row / col / square, then, if you sum all the row, the result need to be ALWAYS the same, if not, then, maybe one number is missing, or is duplicate, etc ... Something is wrong. But you need to do Multiplications on it too, because you can have this grid true only with sum method :
 
-So in our exemple, the sum is :
+```
+1 1 | 4 4
+4 4 | 1 1
+---------
+1 1 | 4 4
+4 4 | 1 1
+```
+This is true with only Sum, so thats why we use Prod too.
+
+
+So in our exemple, the Sum is :
 1 + 2 + 3 + 4 = 10.
+
+And the Prod is :
+1 * 2 * 3 * 4 = 24.
 
 For 9x9 grid (also call 3x3 sub grid / square) :
 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 = 45.
+And :
+1 * 2 * 3 * 4 * 5 * 6 * 7 * 8 * 9 = 362880.
 
-It is call `sum of natural numbers`
+It is call `sum of natural numbers` and `factorial`.
 
 How to find it simply ?
 ```
-TOTAL_SUM = (N * (N + 1)) / 2
+TOTAL_SUM = (N * (N + 1)) / 2					// Where N is the number of number in a row / col / square who are always the same !
+
+TOTAL_PROD = 1;
+
+for (Each N)	{
+	TOTAL_PROD *= N - i;
+}
 ```
+
+
+
 
 So your code will look something like this :
 
 ```
-TOTAL_SUM = (N * (N + 1)) / 2				// Where N is the number of number in a row / col / square who are always the same !
 int MySum = 0;
+int MyProd = 1;
 For (each number in my row / col)	{
-	MySym += ActualNumber;
+	MySum += ActualNumber;
+	MyProd *= ActualNumber;
 }
 If MySum != TOTAL_SUM
 	Your row / col / square is not good !
+If MyProd != TOTAL_PROD
+	Your row / col / square is not good !
 ```
 
-Note that the TOTAL_SUM need to be calc one time for the whole grid, so do it first, then put the result in an int, and put this int in you main struct.
+Note that the TOTAL_SUM and TOTAL_PROD need to be calc one time for the whole grid, so do it first, then put the result in an int, and put this int in you main struct.
 
-Oh I forget, yes you need a global struct, with TOTAL_SUM in.
+Oh I forget, yes you need a global struct, with TOTAL_SUM in. Not in global, you just pass it as an arg at every function that request it !
 
 ------
 
@@ -137,8 +164,9 @@ for (each row)	{				// for mainGrid
 So now you have a grid with all the square SUM of mainGrid.
 
 You need to check if all SUMM are equal to ... TOTAL_SUM !
+And the same for TOTAL_PROD
 
-It's easy to do just check all number in squareGrid and comapre it to TOTAL_SUM.
+It's easy to do just check all number in squareGrid and comapre it to TOTAL_SUM and TOTAL_PROD.
 
 
 Perfect now you can check if a grid is valid or not !!!!
@@ -148,14 +176,16 @@ One more thing, here my main struct :
 
 ```
 typedef struct	{
-	int	psize;						// The size of the main grid, if your grid is 9x9, then psize is 9.
-	int	sum;						// the SUM number
-	int sSize;						// The size of a square
-	int	**grid;						// The mainGrid !
-	int	**sGrid;					// The squareGrid, like for 4x4 mainGrid you have 2x2 squareGrid
-	int	incNbr;						// The number of incomplete points (See AutoComplete part)
-	int	**iPos;						// positions of incomplete points (See AutoComplete part)
-	unsigned long long	maxTry;		// The Max try for Brute Force, yes its too much (See AutoComplete part)
+	int	psize;					// The size of the main grid, and the size of each row, col and squares
+	int	sum;					// The SUM number
+	int prod;					// The multiplication product
+	int sSize;					// The size of a square
+	int	**grid;					// The mainGrid
+	int	**sGridSum;				// The squareGridSum, like for 4x4 you have 2x2 grid
+	int	**sGridProd;			// The squareGridProd, like for 4x4 you have 2x2 grid
+	int	incNbr;					// The number of incomplete points (See AutoComplete part)
+	int	**iPos;					// The positions of incomplete points (See AutoComplete part)
+	unsigned long long	maxTry;	// The Max try for Brute Force (See AutoComplete part)
 } parameters;
 ```
 

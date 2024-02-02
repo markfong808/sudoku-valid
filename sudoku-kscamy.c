@@ -11,25 +11,22 @@
 #define	DEBUG_COMPLETE 0
 #define	DEBUG_BRUTE_FORCE 0
 #define MAX_WHILE 500 // security to avoid abort
-// #define MAX_WHILE_BRUTE_FORCE 10000000 // security to crash
 #define MAX_WHILE_BRUTE_FORCE 18446744073709551614 // security to crash
 #define TRUE 1
 #define FALSE 0
 #define printfRes FALSE
 
-// #define num_threads 27
-
-// int result[num_threads] = {0}; 
-
 typedef struct	{
-	int	psize;
-	int	sum;		// the SUM number
-	int sSize;		// size of a square
-	int	**grid;
-	int	**sGrid;	// Square Grid, like for 4x4 you have 2x2 square
-	int	incNbr;	// number of incomplete points
-	int	**iPos;	// positions of incomplete points
-	unsigned long long	maxTry;	// Max try for Brute Force
+	int	psize;					// The number in a row / col / square
+	int	sum;					// The SUM number
+	int prod;					// The multiplication product
+	int sSize;					// The size of a square
+	int	**grid;					// The mainGrid
+	int	**sGridSum;				// The squareGridSum, like for 4x4 you have 2x2 squares
+	int	**sGridProd;			// The squareGridSum, like for 4x4 you have 2x2 squares
+	int	incNbr;					// The number of incomplete points
+	int	**iPos;					// The positions of incomplete points
+	unsigned long long	maxTry;	// The Max try for Brute Force
 } parameters;
 
 // return the absolute value
@@ -41,7 +38,8 @@ void	fillDataSquareGrid(parameters *d)	{	// return 1 if KO, 0 if OK
 	if (DEBUG_CHECK)	printf("fillDataSquareGrid : Start\n");
 	for (int row=1;  row <= d->psize; row++)	{
 		for (int col=1; col <= d->psize; col++)	{
-			d->sGrid[(((col - 1) / d->sSize) + 1)][(((row - 1) / d->sSize) + 1 )] += abs(d->grid[col][row]);
+			d->sGridSum[(((col - 1) / d->sSize) + 1)][(((row - 1) / d->sSize) + 1 )] += abs(d->grid[col][row]);
+			d->sGridProd[(((col - 1) / d->sSize) + 1)][(((row - 1) / d->sSize) + 1 )] *= abs(d->grid[col][row]);
 			if (DEBUG_CHECK)	printf("col: %d, row: %d, col/: %d, row/: %d\n", col, row, (((col - 1) / d->sSize) + 1), (((row - 1) / d->sSize) + 1 ));
 		}
 	}
@@ -53,101 +51,168 @@ void*	checkSquareGrid(void *arg)	{	// return 1 if KO, 0 if OK
 	if (DEBUG_CHECK)	printf("checkSquareGrid\n");
 	for (int row=1;  row <= d->sSize; row++)	{
 		for (int col=1; col <= d->sSize; col++)	{
-			if (d->sGrid[row][col] != d->sum){
-				if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", d->sGrid[row][col], d->sum);
+			if (d->sGridSum[row][col] != d->sum){
+				if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", d->sGridSum[row][col], d->sum);
 				if (printfRes == TRUE)	printf("checkSquareGrid : KO\n");
-				// return (1); // KO
 				 return (void*)(intptr_t)1;
 			}
-			if (DEBUG_CHECK)	printf("%d ", d->sGrid[row][col]);
+			if (d->sGridProd[row][col] != d->prod){
+				if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", d->sGridProd[row][col], d->prod);
+				if (printfRes == TRUE)	printf("checkSquareGrid : KO\n");
+				 return (void*)(intptr_t)1;
+			}
+			if (DEBUG_CHECK)	printf("%d ", d->sGridSum[row][col]);
 		}
 		if (DEBUG_CHECK)	printf("\n");
 	}
 	if (printfRes == TRUE)	printf("checkSquareGrid : OK\n");
-	// return (0); // OK
 	return (void*)(intptr_t)0;
 }
 
 int	checkSingleRow(parameters *d, int y)	{	// return 1 if KO, 0 if OK
-	if (DEBUG_CHECK)	printf("checkSingleRow\n");
+	if (DEBUG_CHECK)	printf("checkSingleRow:\n");
 	int	sum = 0;
+	int	prod = 1;
 
 	for (int col=1; col <= d->psize; col++)	{
 		sum += abs(d->grid[y][col]);
+		prod *= abs(d->grid[y][col]);
 		if (DEBUG_CHECK)	printf("%d ", d->grid[y][col]);
 	}
 	if (DEBUG_CHECK)	printf("\n");
-	if (sum != d->sum){
+	if (sum != d->sum)	{
 		if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", sum, d->sum);
-		if (printfRes == TRUE)	printf("checkSingleRow : KO\n");
+		if (printfRes == TRUE)	printf("checkSingleRow: KO\n");
 		return (1); // KO
 	}
-	if (printfRes == TRUE)	printf("checkSingleRow : OK\n");
+	if (prod != d->prod)	{
+		if (DEBUG_CHECK)	printf ("prod %d d->prod %d\n", prod, d->prod);
+		if (printfRes == TRUE)	printf("checkSingleRow: KO\n");
+		return (1); // KO
+	}
+
+	if (printfRes == TRUE)	printf("checkSingleRow: OK\n");
 	return (0); // OK
 }
 
 void*	checkRow(void *arg)	{	// return 1 if KO, 0 if OK
 	parameters *d = arg;
-	if (DEBUG_CHECK)	printf("checkRow\n");
+	if (DEBUG_CHECK)	printf("checkRow:\n");
 	int	sum = 0;
+	int prod = 1;
+
 	for (int row=1;  row <= d->psize; row++)	{
 		for (int col=1; col <= d->psize; col++)	{
 			sum += abs(d->grid[row][col]);
+			prod *= abs(d->grid[row][col]);
 			if (DEBUG_CHECK)	printf("%d ", d->grid[row][col]);
 		}
 		if (DEBUG_CHECK)	printf("\n");
 		if (sum != d->sum){
 			if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", sum, d->sum);
-			if (printfRes == TRUE)	printf("Rows : KO\n");
+			if (printfRes == TRUE)	printf("checkRow: KO\n");
 			// return (1); // KO
 			return (void*)(intptr_t)1;
 		}
+		if (prod != d->prod)	{
+			if (DEBUG_CHECK)	printf ("prod %d d->prod %d\n", prod, d->prod);
+			if (printfRes == TRUE)	printf("checkRow: KO\n");
+			return (void*)(intptr_t)1;
+		}
 		sum = 0;
+		prod = 1;
 	}
-	if (printfRes == TRUE)	printf("Rows : OK\n");
+	if (printfRes == TRUE)	printf("checkRow: OK\n");
 	// return (0); // OK
 	return (void*)(intptr_t)0;
 }
 
 int	checkSingleCol(parameters *d, int x)	{	// return 1 if KO, 0 if OK
-	if (DEBUG_CHECK)	printf("checkSingleCol\n");
+	if (DEBUG_CHECK)	printf("checkSingleCol:\n");
 	int	sum = 0;
+	int prod = 1;
 
 	for (int row=1; row <= d->psize; row++)	{
 		sum += abs(d->grid[row][x]);
+		prod *= abs(d->grid[row][x]);
 		if (DEBUG_CHECK)	printf("%d ", d->grid[row][x]);
 	}
 	if (DEBUG_CHECK)	printf("\n");
 	if (sum != d->sum){
 		if (DEBUG_CHECK)	printf("sum %d d->sum %d\n", sum, d->sum);
-		if (printfRes == TRUE)	printf("checkSingleCol : KO\n");
+		if (printfRes == TRUE)	printf("checkSingleCol: KO\n");
 		return (1); // KO
 	}
-	if (printfRes == TRUE)	printf("checkSingleCol : OK\n");
+	if (prod != d->prod)	{
+		if (DEBUG_CHECK)	printf ("prod %d d->prod %d\n", prod, d->prod);
+		if (printfRes == TRUE)	printf("checkSingleCol: KO\n");
+		return (1); // KO
+	}
+
+	if (printfRes == TRUE)	printf("checkSingleCol: OK\n");
 	return (0); // OK
 }
 
+// void*	checkCol_tests(void *arg)	{	// return 1 if KO, 0 if OK
+// 	parameters *d = arg;
+// 	printf("checkCol:\n");
+// 	int	sum = 0;
+// 	int prod = 1;
+// 	for (int col=1;  col <= d->psize; col++)	{
+// 		for (int row=1; row <= d->psize; row++)	{
+// 			sum += abs(d->grid[row][col]);
+// 			prod *= abs(d->grid[row][col]);
+// 			printf("%d ", d->grid[row][col]);
+// 		}
+// 		printf("\n");
+// 		if (sum != d->sum){
+// 			printf ("sum %d d->sum %d\n", sum, d->sum);
+// 			printf("checkCol: KO\n");
+// 			// return (1); // KO
+// 			return (void*)(intptr_t)(1);
+// 		}
+// 		if (prod != d->prod)	{
+// 			printf ("prod %d d->prod %d\n", prod, d->prod);
+// 			printf("checkCol: KO\n");
+// 			return (void*)(intptr_t)1;
+// 		}
+// 		prod = 1;
+// 		sum = 0;
+// 	}
+// 	printf("checkCol: OK\n");
+// 	// return (0); // OK
+// 	return (void*)(intptr_t)(0);
+// }
+
 void*	checkCol(void *arg)	{	// return 1 if KO, 0 if OK
 	parameters *d = arg;
-	if (DEBUG_CHECK)	printf("checkCol\n");
+	if (DEBUG_CHECK)	printf("checkCol:\n");
 	int	sum = 0;
+	int prod = 1;
 	for (int col=1;  col <= d->psize; col++)	{
 		for (int row=1; row <= d->psize; row++)	{
 			sum += abs(d->grid[row][col]);
+			prod *= abs(d->grid[row][col]);
 			if (DEBUG_CHECK)	printf("%d ", d->grid[row][col]);
 		}
 		if (DEBUG_CHECK)	printf("\n");
 		if (sum != d->sum){
 			if (DEBUG_CHECK)	printf ("sum %d d->sum %d\n", sum, d->sum);
-			if (printfRes == TRUE)	printf("col : KO\n");
+			if (printfRes == TRUE)	printf("checkCol: KO\n");
 			// return (1); // KO
+			return (void*)(intptr_t)(1);
+		}
+		if (prod != d->prod)	{
+			if (DEBUG_CHECK)	printf ("prod %d d->prod %d\n", prod, d->prod);
+			if (printfRes == TRUE)	printf("checkCol: KO\n");
 			return (void*)(intptr_t)1;
 		}
+		prod = 1;
 		sum = 0;
 	}
-	if (printfRes == TRUE)	printf("col : OK\n");
+	if (printfRes == TRUE)	printf("checkCol: OK\n");
 	// return (0); // OK
-	return (void*)(intptr_t)0;
+	return (void*)(intptr_t)(0);
 }
 
 int	checkComplete(parameters *d)	{	// return 1 if KO, 0 if OK
@@ -172,7 +237,9 @@ void printDataGrid(parameters *d, int neg)	{	// set neg to TRUE or FALSE if you 
 	for (int row = 1; row <= d->psize; row++)	{
 		for (int col = 1; col <= d->psize; col++)	{
 			if (neg == FALSE)	{
-				if (abs(d->grid[row][col]) >= 10 && abs(d->grid[row][col]) <= 35)
+				if (d->grid[row][col] == 0)
+					printf("<%d>", abs(d->grid[row][col]));
+				else if (abs(d->grid[row][col]) >= 10 && abs(d->grid[row][col]) <= 35)
 					printf(" %c ", 'A' + (abs(d->grid[row][col]) - 10));
 				else
 					printf(" %d ", abs(d->grid[row][col]));
@@ -191,7 +258,7 @@ void printDataSquareGrid(parameters *d)	{
 	printf("Square Grid :\n");
 	for (int row = 1; row <= d->sSize; row++)	{
 		for (int col = 1; col <= d->sSize; col++)
-			printf("%d ", d->sGrid[row][col]);
+			printf("%d ", d->sGridSum[row][col]);
 		printf("\n");
 	}
 	printf("\n");
@@ -206,40 +273,47 @@ void printDataIPos(parameters *d)	{
 }
 
 void printAllData(parameters *d)	{
-	printf("d->psize : %d\n", d->psize);
-	printf("d->sum : %d\n", d->sum);
-	printf("d->sSize : %d\n", d->sSize);
-	printf("\n");
+	// printf("d->psize : %d\n", d->psize);
+	// printf("d->sum : %d\n", d->sum);
+	// printf("d->sSize : %d\n", d->sSize);
+	// printf("\n");
 	printDataGrid(&*d, FALSE);
-	printDataSquareGrid(&*d);
+	// printDataSquareGrid(&*d);
 }
 
-void	resetDataSquareGrid(parameters *d)	{
+void	resetDataSquareGridAll(parameters *d)	{
 	for (int row = 1; row <= d->sSize; row++)	{
-		for (int col = 1; col <= d->sSize; col++)
-			d->sGrid[row][col] = 0;
+		for (int col = 1; col <= d->sSize; col++)	{
+			d->sGridSum[row][col] = 0;
+			d->sGridProd[row][col] = 1;
+		}
 	}
 }
 
 int checkValidThreads(parameters d, int print)	{	// return 1 if KO, 0 if OK
-	resetDataSquareGrid(&d);
+	resetDataSquareGridAll(&d);
 	fillDataSquareGrid(&d);
 
-	pthread_t thread1, thread2, thread3;
+	// pthread_t thread1, thread2, thread3;
 
-	pthread_create(&thread1, NULL, checkRow, (void*)&d);
-    pthread_create(&thread2, NULL, checkCol, (void*)&d);
-    pthread_create(&thread3, NULL, checkSquareGrid, (void*)&d);
+	// pthread_create(&thread1, NULL, checkRow, (void*)&d);
+    // pthread_create(&thread2, NULL, checkCol, (void*)&d);
+    // pthread_create(&thread3, NULL, checkSquareGrid, (void*)&d);
 
-	void* result1, *result2, *result3;
-	
-    pthread_join(thread1, &result1);
-    pthread_join(thread2, &result2);
-    pthread_join(thread3, &result3);
+	// void* result1, *result2, *result3;
 
-	int resultValue1 = (int)(intptr_t)result1;
-    int resultValue2 = (int)(intptr_t)result2;
-    int resultValue3 = (int)(intptr_t)result3;
+    // pthread_join(thread1, &result1);
+    // pthread_join(thread2, &result2);
+    // pthread_join(thread3, &result3);
+
+	// int resultValue1 = (int)(intptr_t)result1;
+    // int resultValue2 = (int)(intptr_t)result2;
+    // int resultValue3 = (int)(intptr_t)result3;
+
+	int resultValue1 = (int)(intptr_t)checkRow(&d);
+    int resultValue2 = (int)(intptr_t)checkCol(&d);
+    int resultValue3 = (int)(intptr_t)checkSquareGrid(&d);
+
 
 	if (print == TRUE && resultValue1 == 0)
 		printf("checkValidThreads: checkRow: OK\n");
@@ -261,9 +335,46 @@ int checkValidThreads(parameters d, int print)	{	// return 1 if KO, 0 if OK
 	if (resultValue3 == 1)
 		return (1);
 
-	printf("checkValidThreads: OK\n");
+	if (print == TRUE)
+		printf("checkValidThreads: OK\n");
 	return (0); // DEFAULT : OK
 }
+
+
+// int checkValidNormal(parameters d)	{	// return 1 if KO, 0 if OK
+// 	printf("\n\ncheckValidNormal: Start:\n");
+// 	resetDataSquareGridAll(&d);
+// 	fillDataSquareGrid(&d);
+
+// 	int resultValue1 = (int)(intptr_t)checkRow(&d);
+//     int resultValue2 = (int)(intptr_t)checkCol_tests(&d);
+//     int resultValue3 = (int)(intptr_t)checkSquareGrid(&d);
+
+
+// 	if (resultValue1 == 0)
+// 		printf("checkValidNormal: checkRow: OK\n");
+// 	else
+// 		printf("checkValidNormal: checkRow: KO\n");
+// 	if (resultValue2 == 0)
+// 		printf("checkValidNormal: checkCol_tests: OK\n");
+// 	else
+// 		printf("checkValidNormal: checkCol_tests: KO\n");
+// 	if (resultValue3 == 0)
+// 		printf("checkValidNormal: checkSquareGrid: OK\n");
+// 	else
+// 		printf("checkValidNormal: checkSquareGrid: KO\n");
+
+// 	if (resultValue1 == 1)
+// 		return (1);
+// 	if (resultValue2 == 1)
+// 		return (1);
+// 	if (resultValue3 == 1)
+// 		return (1);
+
+// 	printf("checkValidNormal: OK\n");
+// 	return (0); // DEFAULT : OK
+// }
+
 
 void	initDataIncompleteGrid(parameters *d)	{
 	if (DEBUG_COMPLETE)	printf("initDataIncompleteGrid : Start\n");
@@ -305,6 +416,12 @@ int	initData(char *filename, parameters *d)	{	// init Data struct
 	/*	set sum	*/
 	d->sum = (d->psize * (d->psize + 1) ) / 2;
 
+	/*	set prod	*/
+	d->prod = 1;
+	for (int i=0; i < d->psize; i++)	{
+		d->prod *= d->psize - i;
+	}
+
 	/*	set grid	*/
 	d->grid = (int **)malloc((d->psize + 1) * sizeof(int *));	// malloc grid
 	for (int row = 1; row <= d->psize; row++) {				// init grid
@@ -323,12 +440,20 @@ int	initData(char *filename, parameters *d)	{	// init Data struct
 	}
 	fclose(fp);
 
-	/*	set sGrid : squareGrid	*/
-	d->sGrid = (int **)malloc((d->sSize + 1) * sizeof(int *));	// malloc grid
+	/*	set sGridSum : squareGrid	*/
+	d->sGridSum = (int **)malloc((d->sSize + 1) * sizeof(int *));	// malloc grid
 	for (int row = 1; row <= d->sSize; row++) {				// init grid
-		d->sGrid[row] = (int *)malloc((d->sSize + 1) * sizeof(int));
+		d->sGridSum[row] = (int *)malloc((d->sSize + 1) * sizeof(int));
 		for (int col = 1; col <= d->sSize; col++)
-			d->sGrid[row][col] = 0;
+			d->sGridSum[row][col] = 0;
+	}
+
+	/*	set sGridprod : squareGrid	*/
+	d->sGridProd = (int **)malloc((d->sSize + 1) * sizeof(int *));	// malloc grid
+	for (int row = 1; row <= d->sSize; row++) {				// init grid
+		d->sGridProd[row] = (int *)malloc((d->sSize + 1) * sizeof(int));
+		for (int col = 1; col <= d->sSize; col++)
+			d->sGridProd[row][col] = 1;
 	}
 
 	/*	set incNbr : incomplete numbers	*/
@@ -344,8 +469,11 @@ void deleteData(parameters *d)	{
 		free(d->grid[row]);
 	free(d->grid);
 	for (int row = 1; row <= d->sSize; row++)
-		free(d->sGrid[row]);
-	free(d->sGrid);
+		free(d->sGridSum[row]);
+	free(d->sGridSum);
+	for (int row = 1; row <= d->sSize; row++)
+		free(d->sGridProd[row]);
+	free(d->sGridProd);
 }
 
 void	initDataIPos(parameters *d)	{
@@ -400,29 +528,31 @@ unsigned long long	useBruteForce(parameters *d)	{
 	return (ret);
 }
 
-int	myPow(int base, int exponent)	{
-    int res = 1;
+unsigned long long	myPow(int base, int exponent)	{
+	// printf("myPow: %d, %d\n");
+    unsigned long long res = 1;
     for (int i = 0; i < exponent; i++) {
         res *= base;
     }
+	// printf("myPow: res: %d\n");
     return (res);
 }
 
 void	completeGrid(parameters *d)	{
 	unsigned long long i = 0;
 	initDataIncompleteGrid(&*d);
-	d->maxTry = myPow(d->psize, d->incNbr) + 1;
+	d->maxTry = myPow(d->psize, d->incNbr);
 	printf("completeGrid: incNbr: %d, MaxTry: %llu\n", d->incNbr, d->maxTry);
 	// printDataGrid(&*d, TRUE);
 	initDataIPos(&*d);
 	// printDataIPos(&*d);
-	while (i < ULLONG_MAX && i <= d->maxTry && checkValidThreads(*d, FALSE))	{
+	while (i < ULLONG_MAX && i < d->maxTry && checkValidThreads(*d, FALSE))	{
 		i += useBruteForce(&*d);
-		printf("%llu.%02llu%% done\r", i * 100 / d->maxTry, (i * 10000 / d->maxTry) % 100);
+		printf("%llu.%02llu%% tests done\r", i * 100 / d->maxTry, (i * 10000 / d->maxTry) % 100);
         fflush(stdout);
 		i++;
 	}
-	printf("%llu.%02llu%% done\n", i * 100 / d->maxTry, (i * 10000 / d->maxTry) % 100);
+	printf("%llu.%02llu%% tests done\n", i * 100 / d->maxTry, (i * 10000 / d->maxTry) % 100);
 	printf("completeGrid: find with %llu tests\n", i);
 }
 
@@ -433,6 +563,7 @@ int main(int argc, char **argv)	{
 	}
 	parameters data;			// create data struct
 	initData(argv[1], &data);	// init data struct
+	printf("Grid at the Start:\n");
 	printAllData(&data);
 
 	if (checkComplete(&data))
