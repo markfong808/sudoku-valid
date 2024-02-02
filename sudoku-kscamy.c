@@ -29,6 +29,11 @@ typedef struct	{
 	unsigned long long	maxTry;	// The Max try for Brute Force
 } parameters;
 
+// typedef struct	{
+// 	parameters *mainData;
+// } to_threads;
+
+
 // return the absolute value
 int	abs(int i)	{
 	return (i > 0) ? i : -i ;
@@ -94,6 +99,32 @@ int	checkSingleRow(parameters *d, int y)	{	// return 1 if KO, 0 if OK
 	if (printfRes == TRUE)	printf("checkSingleRow: OK\n");
 	return (0); // OK
 }
+
+int	preCheckRow(parameters *d)	{	// return 1 if KO, 0 if OK
+	int	sum = 0;
+	int x = 0;
+	int nbr = 0;
+
+	for (int row=1;  row <= d->psize; row++)	{
+		for (int col=1; col <= d->psize; col++)	{
+			sum += abs(d->grid[row][col]);
+			if (d->grid[row][col] <= 0)	{
+				x = col;
+				nbr++;
+			}
+		}
+		if (sum != d->sum && nbr == 1)	{
+			// printf("preCheckRow: [%d,%d]:%d\n", row, x, d->sum - sum);
+			d->grid[row][x] = d->sum - sum;
+			return (1);
+		}
+		x = 0;
+		nbr = 0;
+		sum = 0;
+	}
+	return (0);
+}
+
 
 void*	checkRow(void *arg)	{	// return 1 if KO, 0 if OK
 	parameters *d = arg;
@@ -183,6 +214,30 @@ int	checkSingleCol(parameters *d, int x)	{	// return 1 if KO, 0 if OK
 // 	// return (0); // OK
 // 	return (void*)(intptr_t)(0);
 // }
+
+int	preCheckCol(parameters *d)	{	// return 1 if KO, 0 if OK
+	int	sum = 0;
+	int y = 0;
+	int nbr = 0;
+
+	for (int col=1;  col <= d->psize; col++)	{
+		for (int row=1; row <= d->psize; row++)	{
+			sum += abs(d->grid[row][col]);
+			if (d->grid[row][col] <= 0)	{
+				y = row;
+				nbr++;
+			}
+		}
+		if (sum != d->sum && nbr == 1)	{
+			d->grid[y][col] = d->sum - sum;
+			return (1);
+		}
+		y = 0;
+		nbr = 0;
+		sum = 0;
+	}
+	return (0);
+}
 
 void*	checkCol(void *arg)	{	// return 1 if KO, 0 if OK
 	parameters *d = arg;
@@ -538,20 +593,43 @@ unsigned long long	myPow(int base, int exponent)	{
     return (res);
 }
 
+void	preCheckGrid(parameters *d)	{	// return 1 if KO, 0 if OK
+	// printf("preCheckGrid: Start\n");
+	int exit = 3;
+	int i=0;
+	while (i < 50 && exit > 0)	{
+		exit += preCheckRow(&*d);
+		exit += preCheckCol(&*d);
+		exit--;
+		i++;
+	}
+	// printf("preCheckGrid: End: %d\n", i);
+}
+
 void	completeGrid(parameters *d)	{
 	unsigned long long i = 0;
+
+	preCheckGrid(&*d);
+	if (!(checkValidThreads(*d, FALSE)))	{
+		printf("completeGrid: preCheckGrid: OK\n");
+		return ;
+	}
+	printf("completeGrid: preCheckGrid: KO\n");
+	printf("completeGrid: Launch Brute Force\n");
 	initDataIncompleteGrid(&*d);
 	d->maxTry = myPow(d->psize, d->incNbr);
 	printf("completeGrid: incNbr: %d, MaxTry: %llu\n", d->incNbr, d->maxTry);
 	// printDataGrid(&*d, TRUE);
 	initDataIPos(&*d);
 	// printDataIPos(&*d);
+
 	while (i < ULLONG_MAX && i < d->maxTry && checkValidThreads(*d, FALSE))	{
 		i += useBruteForce(&*d);
 		printf("%llu.%02llu%% tests done\r", i * 100 / d->maxTry, (i * 10000 / d->maxTry) % 100);
         fflush(stdout);
 		i++;
 	}
+
 	printf("%llu.%02llu%% tests done\n", i * 100 / d->maxTry, (i * 10000 / d->maxTry) % 100);
 	printf("completeGrid: find with %llu tests\n", i);
 }
