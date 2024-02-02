@@ -1,4 +1,5 @@
 // Sudoku puzzle verifier and solver
+#include <string.h>
 #include <math.h>
 #include <assert.h>
 #include <pthread.h>
@@ -7,8 +8,8 @@
 #include <stdlib.h>
 #define num_threads 27
 
-//int result[num_threads] = {0};
-int x = 0; //label the valid flag
+// int result[num_threads] = {0};
+int x = 0; // label the valid flag
 /* structure for passing data to threads */
 typedef struct
 {
@@ -23,292 +24,311 @@ typedef struct
 
 } parameters;
 
-// void *RowCheck(void *par)
-// {
-//   parameters *parm = (parameters *)par;
-//   int row = parm->row;
-//   bool valid = parm->valid;
-//   int psize = parm->psize;
-//   int **grid = parm->grid;
-//   int *valider = (int *)malloc((psize * psize) * sizeof(int));
-//   for (int i = 0; i <= (psize * psize); i++)
-//   {
-//     valider[i] = 0;
-//   }
-//   for (int j = 1; j <= psize; j++)
-//   {
-//     int num = grid[row][j];
-//     if (num < 1 || num > (psize * psize) || valider[num] == 1)
-//     {
-//       valid = false;
-//       x = 1;
-//       break;
-//     }
-//     else
-//     {
-//       valider[num] = 1;
-//     }
-//   }
-//    printf("Valider array after the loop: ");
-//    for (int i = 0; i <= psize * psize; i++)
-//    {
-//      printf("%d ", valider[i]);
-//    }
-//    printf("\n");
-//   // printf("Valid after the loop: %s\n", valid ? "true" : "false");
-//   free(valider);
-
-//   // printf("Thread result: %d\n" ,valid);
-//   // return (void *) valid;
-// }
-
-// void *ColumnCheck(void *par)
-// {
-//   parameters *parm = (parameters *)par;
-//   int col = parm->column;
-//   int psize = parm->psize;
-//   int **grid = parm->grid;
-//   bool valid = parm->valid;
-
-//   int *valider = (int *)malloc((psize * psize) * sizeof(int));
-
-//   for (int i = 0; i <= (psize * psize); i++)
-//   {
-//     valider[i] = 0;
-//   }
-//   for (int i = 1; i <= psize; i++)
-//   {
-//     int num = grid[i][col];
-//     if (num < 1 || num > (psize * psize) || valider[num] == 1)
-//     {
-//       valid = false;
-//       x = 1;
-//       break;
-//     }
-//     else
-//     {
-//       valider[num] = 1;
-//     }
-//   }
-//   // printf("Valider array after the loop: ");
-//   // for (int i = 0; i <= psize * psize; i++)
-//   // {
-//   //   printf("%d ", valider[i]);
-//   // }
-//   // printf("\n");
-//   // printf("Valid after the loop: %s\n", valid ? "true" : "false");
-//   free(valider);
-// }
-
-// void *SubgridCheck(void *par)
-// {
-//   parameters *parm = (parameters *)par;
-//   int row = parm->row;
-//   int col = parm->column;
-//   int psize = parm->psize;
-//   int **grid = parm->grid;
-//   bool valid = parm->valid;
-
-//   int *valider = (int *)malloc((psize + 1) * sizeof(int));
-//   for (int i = 0; i <= psize; i++)
-//   {
-//     valider[i] = 0;
-//   }
-
-//   if(psize > 3) {
-//   int subgrid_size = (int)sqrt(psize);
-//   for (int row = 1; row <= psize; row += subgrid_size)
-//   {
-//     for (int col = 1; col <= psize; col += subgrid_size)
-//     {
-//       // Reset valider for each subgrid
-//       memset(valider, 0, (psize + 1) * sizeof(int));
-//       for (int bx = row; bx < row + subgrid_size; bx++)
-//       { // box_num inner loop
-//         for (int by = col; by < col + subgrid_size; by++)
-//         {
-//           int box_num = grid[bx][by];
-//           if (box_num <  1 || box_num > psize || valider[box_num] == 1){
-//             valid = false;
-//             x = 1;
-//             // Handle breaking out of the innermost loop
-//             goto end_of_subgrid;
-//           } else {
-//             valider[box_num] = 1;
-//           }
-//         }
-//       }
-//     end_of_subgrid:;
-//     }
-//   }
-// }
-
-//   free(valider);
-// }
-  // takes puzzle size and grid[][] representing sudoku puzzle
-  // and row booleans to be assigned: complete and valid.
-  // row-0 and column-0 is ignored for convenience, so a 9x9 puzzle
-  // has grid[1][1] as the top-left element and grid[9]9] as bottom right
-  // A puzzle is complete if it can be completed with no 0s in it
-  // If complete, a puzzle is valid if all rows/columns/boxes have numbers from 1
-  // to psize For incomplete puzzles, we cannot say anything about validity
-  void checkPuzzle(int psize, int **grid, bool *complete, bool *valid)
+void *RowCheck(void *par)
+{
+  parameters *parm = (parameters *)par;
+  int row = parm->row;
+  bool valid = parm->valid;
+  int psize = parm->psize;
+  int **grid = parm->grid;
+  int *valider = (int *)malloc((psize * psize) * sizeof(int));
+  for (int i = 0; i <= (psize * psize); i++)
   {
-    // YOUR CODE GOES HERE and in HELPER FUNCTIONS
-    *valid = true;
-    *complete = true;
-    // loop to check completeness
-    for (int row = 1; row <= psize; row++)
+    valider[i] = 0;
+  }
+  for (int j = 1; j <= psize; j++)
+  {
+    int num = grid[row][j];
+    if (num < 1 || num > (psize * psize) || valider[num] == 1)
     {
-      for (int column = 1; column <= psize; column++)
-      {
-        if (grid[row][column] == 0)
-        {
-          *complete = false;
-          break;
-        }
-      }
+      valid = false;
+      x = 1;
+      break;
     }
-    // if (*complete)
-    // { // if complete is true
-    //   pthread_t rowthread, colthread, subgridthread;
-    //   for (int i = 1; i <= psize; i++)
-    //   {
-    //     parameters *Rowdata = (parameters *)malloc(sizeof(parameters));
-    //     Rowdata->row = i; // check the row only
-    //     Rowdata->complete = true;
-    //     Rowdata->valid = true;
-    //     Rowdata->grid = grid;
-    //     Rowdata->psize = psize;
-    //     parameters *Coldata = (parameters *)malloc(sizeof(parameters));
-    //     Coldata->column = i;
-    //     Coldata->complete = true;
-    //     Coldata->valid = true;
-    //     Coldata->grid = grid;
-    //     Coldata->psize = psize;
-    //     pthread_create(&colthread, NULL, ColumnCheck, Coldata);
-    //     pthread_create(&rowthread, NULL, RowCheck, Rowdata);
-        
-    //     pthread_join(rowthread, NULL);
-    //     pthread_join(colthread, NULL);
-    //     // printf("The value of valid is: %d\n", valid);
-    //     // bool valid = Rowdata->valid;
-    //     free(Rowdata);
-    //     free(Coldata);
-    //   }
-    //   // for (int j = 1; j <= psize; j++)
-    //   // {
-    //   //   parameters *Coldata = (parameters *)malloc(sizeof(parameters));
-    //   //   Coldata->column = j;
-    //   //   Coldata->complete = true;
-    //   //   Coldata->valid = true;
-    //   //   Coldata->grid = grid;
-    //   //   Coldata->psize = psize;
-    //   //   pthread_create(&colthread, NULL, ColumnCheck, Coldata);
-    //   //   pthread_join(colthread, NULL);
-    //   //   free(Coldata);
-    //   // }
-
-    //   for (int i = 1; i <= psize; i++)  //4x4 create 4 thread
-    //   {
-    //     parameters *SubGrid_data = (parameters *)malloc(sizeof(parameters));
-    //     SubGrid_data->column = i;
-    //     SubGrid_data->complete = true;
-    //     SubGrid_data->valid = true;
-    //     SubGrid_data->grid = grid;
-    //     SubGrid_data->psize = psize;
-    //     pthread_create(&subgridthread, NULL, SubgridCheck, SubGrid_data);
-    //     pthread_join(subgridthread, NULL);
-    //     free(SubGrid_data);
-    //   }
-
-      
-        if (x == 1)
-        {
-          *valid = false;
-        }
-        
-      
+    else
+    {
+      valider[num] = 1;
     }
+  }
+  // printf("Valider array after the loop: ");
+  // for (int i = 0; i <= psize * psize; i++)
+  // {
+  //   printf("%d ", valider[i]);
   // }
+  // printf("\n");
+  // printf("Valid after the loop: %s\n", valid ? "true" : "false");
+  free(valider);
 
-  // takes filename and pointer to grid[][]
-  // returns size of Sudoku puzzle and fills grid
-  int readSudokuPuzzle(char *filename, int ***grid)
+  // printf("Thread result: %d\n" ,valid);
+  // return (void *) valid;
+}
+
+void *ColumnCheck(void *par)
+{
+
+  parameters *parm = (parameters *)par;
+  int col = parm->column;
+  int psize = parm->psize;
+  int **grid = parm->grid;
+  bool valid = parm->valid;
+
+  int *valider = (int *)malloc((psize * psize) * sizeof(int));
+
+  for (int i = 0; i <= (psize * psize); i++)
   {
-    FILE *fp = fopen(filename, "r");
-    if (fp == NULL)
+    valider[i] = 0;
+  }
+  for (int i = 1; i <= psize; i++)
+  {
+    int num = grid[i][col];
+    if (num < 1 || num > (psize * psize) || valider[num] == 1)
     {
-      printf("Could not open file %s\n", filename);
-      exit(EXIT_FAILURE);
+      valid = false;
+      x = 1;
+      break;
     }
-    int psize;
-    fscanf(fp, "%d", &psize);
-    int **agrid = (int **)malloc((psize + 1) * sizeof(int *));
-    for (int row = 1; row <= psize; row++)
+    else
     {
-      agrid[row] = (int *)malloc((psize + 1) * sizeof(int));
-      for (int col = 1; col <= psize; col++)
-      {
-        fscanf(fp, "%d", &agrid[row][col]);
-      }
+      valider[num] = 1;
     }
-    fclose(fp);
-    *grid = agrid;
-    return psize;
+  }
+  // printf("Valider array after the loop: ");
+  // for (int i = 0; i <= psize * psize; i++)
+  // {
+  //   printf("%d ", valider[i]);
+  // }
+  // printf("\n");
+  // printf("Valid after the loop: %s\n", valid ? "true" : "false");
+  free(valider);
+}
+
+void *SubgridCheck(void *par)
+{
+  parameters *parm = (parameters *)par;
+  int row = parm->row;
+  int col = parm->column;
+  int psize = parm->psize;
+  int **grid = parm->grid;
+  bool valid = parm->valid;
+
+  int *valider = (int *)malloc((psize + 1) * sizeof(int));
+  for (int i = 0; i <= psize; i++)
+  {
+    valider[i] = 0;
   }
 
-  // takes puzzle size and grid[][]
-  // prints the puzzle
-  void printSudokuPuzzle(int psize, int **grid)
+  if (psize > 3)
   {
-    printf("%d\n", psize);
-    for (int row = 1; row <= psize; row++)
+    int subgrid_size = (int)sqrt(psize);
+    for (int row = 1; row <= psize; row += subgrid_size)
     {
-      for (int col = 1; col <= psize; col++)
+      for (int col = 1; col <= psize; col += subgrid_size)
       {
-        printf("%d ", grid[row][col]);
+        // Reset valider for each subgrid
+        memset(valider, 0, (psize + 1) * sizeof(int));
+        for (int bx = row; bx < row + subgrid_size; bx++)
+        { // box_num inner loop
+          for (int by = col; by < col + subgrid_size; by++)
+          {
+            int box_num = grid[bx][by];
+            if (box_num < 1 || box_num > psize || valider[box_num] == 1)
+            {
+              valid = false;
+              x = 1;
+              // Handle breaking out of the innermost loop
+              goto end_of_subgrid;
+            }
+            else
+            {
+              valider[box_num] = 1;
+            }
+          }
+        }
+      end_of_subgrid:;
       }
-      printf("\n");
+    }
+  }
+
+  free(valider);
+}
+
+// takes puzzle size and grid[][] representing sudoku puzzle
+// and row booleans to be assigned: complete and valid.
+// row-0 and column-0 is ignored for convenience, so a 9x9 puzzle
+// has grid[1][1] as the top-left element and grid[9]9] as bottom right
+// A puzzle is complete if it can be completed with no 0s in it
+// If complete, a puzzle is valid if all rows/columns/boxes have numbers from 1
+// to psize For incomplete puzzles, we cannot say anything about validity
+void checkPuzzle(int psize, int **grid, bool *complete, bool *valid)
+{
+  // YOUR CODE GOES HERE and in HELPER FUNCTIONS
+  *valid = true;
+  *complete = true;
+  // loop to check completeness
+  for (int row = 1; row <= psize; row++)
+  {
+    for (int column = 1; column <= psize; column++)
+    {
+      if (grid[row][column] == 0)
+      {
+        *complete = false;
+        break;
+      }
+    }
+  }
+
+//   if (*complete == false)
+//   {
+//     //fill
+//     int subgrid_size = (int)sqrt(psize);
+//     for (int row = 1; row <= psize; row += subgrid_size)
+//     {
+//       for (int col = 1; col <= psize; col += subgrid_size)
+//       {
+//         if (grid[row][col] == 0)
+//         {
+//           for (int bx = row; bx < row + subgrid_size; bx++)
+//           { // box_num inner loop
+//             for (int by = col; by < col + subgrid_size; by++)
+//             {
+//               int box_num = grid[bx][by];
+              
+//             }
+            
+//           }
+//         }
+//       //end_of_subgrid:;
+//       }
+//     }
+//   }
+// }
+
+if (*complete)
+{ // if complete is true
+  pthread_t rowthread, colthread, subgridthreads;
+  for (int i = 1; i <= psize; i++)
+  {
+    parameters *Rowdata = (parameters *)malloc(sizeof(parameters));
+    Rowdata->row = i; // check the row only
+    Rowdata->complete = true;
+    Rowdata->valid = true;
+    Rowdata->grid = grid;
+    Rowdata->psize = psize;
+    parameters *Coldata = (parameters *)malloc(sizeof(parameters));
+    Coldata->column = i;
+    Coldata->complete = true;
+    Coldata->valid = true;
+    Coldata->grid = grid;
+    Coldata->psize = psize;
+    pthread_create(&colthread, NULL, ColumnCheck, Coldata);
+    pthread_create(&rowthread, NULL, RowCheck, Rowdata);
+
+    pthread_join(rowthread, NULL);
+    pthread_join(colthread, NULL);
+    // printf("The value of valid is: %d\n", valid);
+    // bool valid = Rowdata->valid;
+    free(Rowdata);
+    free(Coldata);
+  }
+
+  for (int i = 1; i <= psize; i++) // 4x4 create 4 thread
+  {
+    parameters *SubGrid_data = (parameters *)malloc(sizeof(parameters));
+    SubGrid_data->row = 1;
+    SubGrid_data->column = 1;
+    SubGrid_data->complete = true;
+    SubGrid_data->valid = true;
+    SubGrid_data->grid = grid;
+    SubGrid_data->psize = psize;
+    pthread_create(&subgridthreads, NULL, SubgridCheck, SubGrid_data);
+    pthread_join(subgridthreads, NULL);
+    free(SubGrid_data);
+  }
+
+  if (x == 1)
+  {
+    *valid = false;
+  }
+}
+}
+
+// takes filename and pointer to grid[][]
+// returns size of Sudoku puzzle and fills grid
+int readSudokuPuzzle(char *filename, int ***grid)
+{
+  FILE *fp = fopen(filename, "r");
+  if (fp == NULL)
+  {
+    printf("Could not open file %s\n", filename);
+    exit(EXIT_FAILURE);
+  }
+  int psize;
+  fscanf(fp, "%d", &psize);
+  int **agrid = (int **)malloc((psize + 1) * sizeof(int *));
+  for (int row = 1; row <= psize; row++)
+  {
+    agrid[row] = (int *)malloc((psize + 1) * sizeof(int));
+    for (int col = 1; col <= psize; col++)
+    {
+      fscanf(fp, "%d", &agrid[row][col]);
+    }
+  }
+  fclose(fp);
+  *grid = agrid;
+  return psize;
+}
+
+// takes puzzle size and grid[][]
+// prints the puzzle
+void printSudokuPuzzle(int psize, int **grid)
+{
+  printf("%d\n", psize);
+  for (int row = 1; row <= psize; row++)
+  {
+    for (int col = 1; col <= psize; col++)
+    {
+      printf("%d ", grid[row][col]);
     }
     printf("\n");
   }
+  printf("\n");
+}
 
-  // takes puzzle size and grid[][]
-  // frees the memory allocated
-  void deleteSudokuPuzzle(int psize, int **grid)
+// takes puzzle size and grid[][]
+// frees the memory allocated
+void deleteSudokuPuzzle(int psize, int **grid)
+{
+  for (int row = 1; row <= psize; row++)
   {
-    for (int row = 1; row <= psize; row++)
-    {
-      free(grid[row]);
-    }
-    free(grid);
+    free(grid[row]);
+  }
+  free(grid);
+}
+
+// expects file name of the puzzle as argument in command line
+int main(int argc, char **argv)
+{
+  if (argc != 2)
+  {
+    printf("usage: ./sudoku puzzle.txt\n");
+    return EXIT_FAILURE;
   }
 
-  // expects file name of the puzzle as argument in command line
-  int main(int argc, char **argv)
+  // grid is a 2D array
+  int **grid = NULL;
+  // find grid size and fill grid
+  int sudokuSize = readSudokuPuzzle(argv[1], &grid);
+  bool valid = false;
+  bool complete = false;
+  checkPuzzle(sudokuSize, grid, &complete, &valid);
+  printf("Complete puzzle? ");
+  printf(complete ? "true\n" : "false\n");
+  if (complete)
   {
-    if (argc != 2)
-    {
-      printf("usage: ./sudoku puzzle.txt\n");
-      return EXIT_FAILURE;
-    }
-
-    // grid is a 2D array
-    int **grid = NULL;
-    // find grid size and fill grid
-    int sudokuSize = readSudokuPuzzle(argv[1], &grid);
-    bool valid = false;
-    bool complete = false;
-    checkPuzzle(sudokuSize, grid, &complete, &valid);
-    printf("Complete puzzle? ");
-    printf(complete ? "true\n" : "false\n");
-    if (complete)
-    {
-      printf("Valid puzzle? ");
-      printf(valid ? "true\n" : "false\n");
-    }
-    printSudokuPuzzle(sudokuSize, grid);
-    deleteSudokuPuzzle(sudokuSize, grid);
-    return EXIT_SUCCESS;
+    printf("Valid puzzle? ");
+    printf(valid ? "true\n" : "false\n");
   }
+  printSudokuPuzzle(sudokuSize, grid);
+  deleteSudokuPuzzle(sudokuSize, grid);
+  return EXIT_SUCCESS;
+}
