@@ -232,6 +232,7 @@ int checkValidThreads(parameters d, int print)	{	// return 1 if KO, 0 if OK
     pthread_create(&thread3, NULL, checkSquareGrid, (void*)&d);
 
 	void* result1, *result2, *result3;
+	
     pthread_join(thread1, &result1);
     pthread_join(thread2, &result2);
     pthread_join(thread3, &result3);
