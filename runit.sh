@@ -11,8 +11,8 @@ gcc -pthread -Wall -Wextra -Werror sudoku-kscamy.c -o sudoku
 # ./sudoku puzzles/puzzle2-fill-valid-3.txt
 # ./sudoku puzzles/puzzle2-fill-valid-2-hard.txt
 # ./sudoku puzzles/puzzle9-valid.txt
-# ./sudoku puzzles/puzzle9-fill-valid.txt
-./sudoku puzzles/puzzle9-fill-valid-hard.txt
+./sudoku puzzles/puzzle9-fill-valid.txt
+# ./sudoku puzzles/puzzle9-fill-valid-hard.txt
 # ./sudoku puzzles/puzzle16-valid.txt
 # ./sudoku puzzles/puzzle16-invalid.txt
 # ./sudoku puzzles/puzzle16-fill-valid.txt
