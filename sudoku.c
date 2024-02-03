@@ -9,7 +9,7 @@
 #define num_threads 27
 
 // int result[num_threads] = {0};
-int x = 0; // label the valid flag
+//int x = 0; // label the valid flag
 /* structure for passing data to threads */
 typedef struct
 {
@@ -19,7 +19,6 @@ typedef struct
   int **grid;
   bool complete;
   bool valid;
-  int sum;
   // pthread_mutex_t *mutex; // Mutex for synchronization
 
 } parameters;
@@ -28,7 +27,7 @@ void *RowCheck(void *par)
 {
   parameters *parm = (parameters *)par;
   int row = parm->row;
-  bool valid = parm->valid;
+  //bool valid = parm->valid;
   int psize = parm->psize;
   int **grid = parm->grid;
   int *valider = (int *)malloc((psize * psize) * sizeof(int));
@@ -41,8 +40,8 @@ void *RowCheck(void *par)
     int num = grid[row][j];
     if (num < 1 || num > (psize * psize) || valider[num] == 1)
     {
-      valid = false;
-      x = 1;
+      parm->valid = false;
+
       break;
     }
     else
@@ -70,7 +69,7 @@ void *ColumnCheck(void *par)
   int col = parm->column;
   int psize = parm->psize;
   int **grid = parm->grid;
-  bool valid = parm->valid;
+  //bool valid = parm->valid;
 
   int *valider = (int *)malloc((psize * psize) * sizeof(int));
 
@@ -83,8 +82,7 @@ void *ColumnCheck(void *par)
     int num = grid[i][col];
     if (num < 1 || num > (psize * psize) || valider[num] == 1)
     {
-      valid = false;
-      x = 1;
+      parm->valid = false;
       break;
     }
     else
@@ -109,7 +107,7 @@ void *SubgridCheck(void *par)
   int col = parm->column;
   int psize = parm->psize;
   int **grid = parm->grid;
-  bool valid = parm->valid;
+  //bool valid = parm->valid;
 
   int *valider = (int *)malloc((psize + 1) * sizeof(int));
   for (int i = 0; i <= psize; i++)
@@ -133,8 +131,7 @@ void *SubgridCheck(void *par)
             int box_num = grid[bx][by];
             if (box_num < 1 || box_num > psize || valider[box_num] == 1)
             {
-              valid = false;
-              x = 1;
+              parm->valid = false;
               // Handle breaking out of the innermost loop
               goto end_of_subgrid;
             }
@@ -222,9 +219,13 @@ if (*complete)
     Coldata->psize = psize;
     pthread_create(&colthread, NULL, ColumnCheck, Coldata);
     pthread_create(&rowthread, NULL, RowCheck, Rowdata);
-
+    
     pthread_join(rowthread, NULL);
     pthread_join(colthread, NULL);
+    if (!Rowdata->valid || !Coldata->valid)
+    {
+      *valid = false;
+    }
     // printf("The value of valid is: %d\n", valid);
     // bool valid = Rowdata->valid;
     free(Rowdata);
@@ -242,13 +243,17 @@ if (*complete)
     SubGrid_data->psize = psize;
     pthread_create(&subgridthreads, NULL, SubgridCheck, SubGrid_data);
     pthread_join(subgridthreads, NULL);
+    if (!SubGrid_data->valid )
+    {
+      *valid = false;
+    }
     free(SubGrid_data);
   }
 
-  if (x == 1)
-  {
-    *valid = false;
-  }
+  // if (x == 1)
+  // {
+  //   *valid = false;
+  // }
 }
 }
 
