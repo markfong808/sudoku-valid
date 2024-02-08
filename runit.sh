@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Script to compile and run sudoku program
-rm -f sudoku
+# make re
 # gcc -Wall -Wextra sudoku.c -o sudoku
-gcc -pthread -Wall -Wextra -Werror sudoku-kscamy.c -o sudoku
+# gcc -pthread -Wall -Wextra -Werror sudoku-kscamy.c -o sudoku
 # ./sudoku puzzles/puzzle2-invalid.txt
 # ./sudoku puzzles/puzzle2-valid.txt
 # ./sudoku puzzles/puzzle2-fill-valid.txt
